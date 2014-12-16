@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <metaproxy xmlns="http://indexdata.com/metaproxy" version="1.0">
+  <dlpath>../src</dlpath>
   <start route="start"/>
   <routes>
     <route id="start">
@@ -12,7 +13,7 @@
         <message>log</message>
       </filter>
       <filter type="sparql">
-        <db path="Default" uri="http://localhost:8000/sparql/">
+        <db path="Default" uri="http://bibframe.indexdata.com/sparql/">
           <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
           <prefix>bf: http://bibframe.org/vocab/</prefix>
           <field>?work ?wtitle</field>
