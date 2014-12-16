@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<metaproxy xmlns="http://indexdata.com/metaproxy" version="1.0">
+  <start route="start"/>
+  <routes>
+    <route id="start">
+      <filter type="frontend_net">
+	<threads>10</threads>
+	<port>@:9000</port>
+	<message>FN</message>
+      </filter>
+      <filter type="log">
+        <message>log</message>
+      </filter>
+      <filter type="sparql">
+        <db path="Default" uri="http://localhost:8000/sparql/">
+          <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+          <prefix>bf: http://bibframe.org/vocab/</prefix>
+          <field>?work ?wtitle</field>
+          <criteria>?work a bf:Work</criteria>
+	  <criteria>?work bf:workTitle ?wt</criteria>
+	  <criteria>?wt bf:titleValue ?wtitle</criteria>
+	  <index type="bf.wtitle">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
+        </db>
+      </filter>
+      <filter type="log">
+	<message>http</message>
+	<category apdu="true"/>
+      </filter>
+      <filter type="http_client">
+        <x-forwarded-for>true</x-forwarded-for>
+      </filter>
+      <filter type="bounce"/>
+    </route>
+  </routes>
+</metaproxy>
+
