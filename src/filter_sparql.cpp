@@ -38,9 +38,13 @@ namespace metaproxy_1 {
             class Session;
             class Rep;
             class Conf;
+            class FrontendSet;
 
             typedef boost::shared_ptr<Session> SessionPtr;
             typedef boost::shared_ptr<Conf> ConfPtr;
+
+            typedef boost::shared_ptr<FrontendSet> FrontendSetPtr;
+            typedef std::map<std::string,FrontendSetPtr> FrontendSets;
         public:
             SPARQL();
             ~SPARQL();
@@ -65,6 +69,15 @@ namespace metaproxy_1 {
             boost::mutex m_mutex;
             std::map<mp::Session,SessionPtr> m_clients;
         };
+        class SPARQL::FrontendSet {
+        public:
+            FrontendSet();
+            ~FrontendSet();
+        private:
+            friend class Session;
+            Odr_int hits;
+            xmlDoc *doc;
+        };
         class SPARQL::Session {
         public:
             Session(const SPARQL *);
@@ -78,9 +91,21 @@ namespace metaproxy_1 {
             bool m_in_use;
         private:
             bool m_support_named_result_sets;
+            FrontendSets m_frontend_sets;
             const SPARQL *m_sparql;
         };
     }
+}
+
+yf::SPARQL::FrontendSet::~FrontendSet()
+{
+    if (doc)
+        xmlFreeDoc(doc);
+}
+
+yf::SPARQL::FrontendSet::FrontendSet()
+{
+    doc = 0;
 }
 
 yf::SPARQL::SPARQL() : m_p(new Rep)
@@ -257,22 +282,37 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
     gdu->u.HTTP_Request->content_buf = path;
     gdu->u.HTTP_Request->content_len = strlen(path);
 
-
     yaz_log(YLOG_LOG, "sparql: HTTP request\n%s", sparql_query);
 
     http_package.request() = gdu;
     http_package.move();
 
     Z_GDU *gdu_resp = http_package.response().get();
+    Z_APDU *apdu_res = 0;
     if (gdu_resp && gdu_resp->which == Z_GDU_HTTP_Response)
     {
         Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
+        FrontendSetPtr fset(new FrontendSet);
+
+        fset->doc = xmlParseMemory(resp->content_buf, resp->content_len);
+        if (!fset->doc)
+            apdu_res = odr.create_searchResponse(apdu_req,
+                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
+                                             "invalid XML from backendbackend");
+        else
+        {
+            apdu_res = odr.create_searchResponse(apdu_req, 0, 0);
+
+            m_frontend_sets[apdu_req->u.searchRequest->resultSetName] = fset;
+        }
     }
     else
     {
         yaz_log(YLOG_LOG, "sparql: no HTTP response");
+        apdu_res = odr.create_searchResponse(apdu_req,
+                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
+                                             "no HTTP response from backend");
     }
-    Z_APDU *apdu_res = odr.create_searchResponse(apdu_req, 0, 0);
     return apdu_res;
 }
 
@@ -321,6 +361,24 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
     {
         Z_SearchRequest *req = apdu_req->u.searchRequest;
 
+        FrontendSets::iterator fset_it =
+            m_frontend_sets.find(req->resultSetName);
+        if (fset_it != m_frontend_sets.end())
+        {
+            // result set already exist
+            // if replace indicator is off: we return diagnostic if
+            // result set already exist.
+            if (*req->replaceIndicator == 0)
+            {
+                Z_APDU *apdu =
+                    odr.create_searchResponse(
+                        apdu_req,
+                        YAZ_BIB1_RESULT_SET_EXISTS_AND_REPLACE_INDICATOR_OFF,
+                        0);
+                package.response() = apdu_res;
+            }
+            m_frontend_sets.erase(fset_it);
+        }
         if (req->query->which != Z_Query_type_1)
         {
             apdu_res = odr.create_searchResponse(
