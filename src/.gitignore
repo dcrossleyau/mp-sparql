@@ -1,0 +1,4 @@
+*.o
+*.so
+*.log
+test_sparql
