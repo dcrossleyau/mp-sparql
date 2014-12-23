@@ -258,6 +258,36 @@ void yf::SPARQL::release_session(Package &package) const
     }
 }
 
+static const xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
+{
+    const xmlNode *ptr = xmlDocGetRootElement(doc);
+    Odr_int cur = 0;
+    for (; ptr; ptr = ptr->next)
+        if (ptr->type == XML_ELEMENT_NODE &&
+            !strcmp((const char *) ptr->name, "sparql"))
+            break;
+    if (ptr)
+    {
+        for (ptr = ptr->children; ptr; ptr = ptr->next)
+            if (ptr->type == XML_ELEMENT_NODE &&
+                !strcmp((const char *) ptr->name, "results"))
+                break;
+    }
+    if (ptr)
+    {
+        for (ptr = ptr->children; ptr; ptr = ptr->next)
+            if (ptr->type == XML_ELEMENT_NODE &&
+                !strcmp((const char *) ptr->name, "result"))
+            {
+                if (cur++ == pos)
+                    break;
+            }
+    }
+    if (sz)
+        *sz = cur;
+    return ptr;
+}
+
 Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
                                         Z_APDU *apdu_req,
                                         mp::odr &odr,
@@ -302,7 +332,8 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
         else
         {
             apdu_res = odr.create_searchResponse(apdu_req, 0, 0);
-
+            get_result(fset->doc, apdu_res->u.searchResponse->resultCount,
+                       -1);
             m_frontend_sets[apdu_req->u.searchRequest->resultSetName] = fset;
         }
     }
