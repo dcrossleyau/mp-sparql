@@ -76,6 +76,7 @@ namespace metaproxy_1 {
         private:
             friend class Session;
             Odr_int hits;
+            std::string db;
             xmlDoc *doc;
         };
         class SPARQL::Session {
@@ -88,6 +89,12 @@ namespace metaproxy_1 {
                                mp::odr &odr,
                                const char *sparql_query,
                                const char *uri);
+            Z_Records *fetch(
+                FrontendSetPtr fset,
+                ODR odr, Odr_oid *preferredRecordSyntax,
+                Z_ElementSetNames *esn,
+                int start, int number, int &error_code, std::string &addinfo,
+                int *number_returned, int *next_position);
             bool m_in_use;
         private:
             bool m_support_named_result_sets;
@@ -258,9 +265,9 @@ void yf::SPARQL::release_session(Package &package) const
     }
 }
 
-static const xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
+static xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
 {
-    const xmlNode *ptr = xmlDocGetRootElement(doc);
+    xmlNode *ptr = xmlDocGetRootElement(doc);
     Odr_int cur = 0;
     for (; ptr; ptr = ptr->next)
         if (ptr->type == XML_ELEMENT_NODE &&
@@ -288,12 +295,57 @@ static const xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
     return ptr;
 }
 
+Z_Records *yf::SPARQL::Session::fetch(
+    FrontendSetPtr fset,
+    ODR odr, Odr_oid *preferredRecordSyntax,
+    Z_ElementSetNames *esn,
+    int start, int number, int &error_code, std::string &addinfo,
+    int *number_returned, int *next_position)
+{
+    Z_Records *rec = (Z_Records *) odr_malloc(odr, sizeof(Z_Records));
+    rec->which = Z_Records_DBOSD;
+    rec->u.databaseOrSurDiagnostics = (Z_NamePlusRecordList *)
+        odr_malloc(odr, sizeof(Z_NamePlusRecordList));
+    rec->u.databaseOrSurDiagnostics->records = (Z_NamePlusRecord **)
+        odr_malloc(odr, sizeof(Z_NamePlusRecord *) * number);
+    int i;
+    for (i = 0; i < number; i++)
+    {
+        rec->u.databaseOrSurDiagnostics->records[i] = (Z_NamePlusRecord *)
+            odr_malloc(odr, sizeof(Z_NamePlusRecord));
+        Z_NamePlusRecord *npr = rec->u.databaseOrSurDiagnostics->records[i];
+        npr->databaseName = odr_strdup(odr, fset->db.c_str());
+        npr->which = Z_NamePlusRecord_databaseRecord;
+
+        xmlNode *node = get_result(fset->doc, 0, start - 1 + i);
+        if (!node)
+            break;
+        assert(node->type == XML_ELEMENT_NODE);
+        assert(!strcmp((const char *) node->name, "result"));
+        xmlNode *tmp = xmlCopyNode(node, 1);
+        xmlBufferPtr buf = xmlBufferCreate();
+        xmlNodeDump(buf, tmp->doc, tmp, 0, 0);
+        npr->u.databaseRecord =
+            z_ext_record_xml(odr, (const char *) buf->content, buf->use);
+        xmlFreeNode(tmp);
+        xmlBufferFree(buf);
+    }
+    rec->u.databaseOrSurDiagnostics->num_records = i;
+    *number_returned = i;
+    if (start + number > fset->hits)
+        *next_position = 0;
+    else
+        *next_position = start + number;
+    return rec;
+}
+
 Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
                                         Z_APDU *apdu_req,
                                         mp::odr &odr,
                                         const char *sparql_query,
                                         const char *uri)
 {
+    Z_SearchRequest *req = apdu_req->u.searchRequest;
     Package http_package(package.session(), package.origin());
 
     http_package.copy_filter(package);
@@ -325,16 +377,56 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
         FrontendSetPtr fset(new FrontendSet);
 
         fset->doc = xmlParseMemory(resp->content_buf, resp->content_len);
+        fset->db = req->databaseNames[0];
         if (!fset->doc)
             apdu_res = odr.create_searchResponse(apdu_req,
                                              YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
                                              "invalid XML from backendbackend");
         else
         {
-            apdu_res = odr.create_searchResponse(apdu_req, 0, 0);
-            get_result(fset->doc, apdu_res->u.searchResponse->resultCount,
-                       -1);
-            m_frontend_sets[apdu_req->u.searchRequest->resultSetName] = fset;
+            Z_Records *records = 0;
+            int number_returned = 0;
+            int next_position = 0;
+            int error_code = 0;
+            std::string addinfo;
+
+            get_result(fset->doc, &fset->hits, -1);
+            m_frontend_sets[req->resultSetName] = fset;
+
+            Odr_int number = 0;
+            const char *element_set_name = 0;
+            mp::util::piggyback_sr(req, fset->hits, number, &element_set_name);
+            if (number)
+            {
+                Z_ElementSetNames *esn;
+
+                if (number > *req->smallSetUpperBound)
+                    esn = req->mediumSetElementSetNames;
+                else
+                    esn = req->smallSetElementSetNames;
+                records = fetch(fset,
+                                odr, req->preferredRecordSyntax, esn,
+                                1, number,
+                                error_code, addinfo,
+                                &number_returned,
+                                &next_position);
+            }
+            if (error_code)
+            {
+                apdu_res =
+                    odr.create_searchResponse(
+                        apdu_req, error_code, addinfo.c_str());
+            }
+            else
+            {
+                apdu_res =
+                    odr.create_searchResponse(apdu_req, 0, 0);
+                Z_SearchResponse *resp = apdu_res->u.searchResponse;
+                *resp->resultCount = fset->hits;
+                *resp->numberOfRecordsReturned = number_returned;
+                *resp->nextResultSetPosition = next_position;
+                resp->records = records;
+            }
         }
     }
     else
@@ -459,6 +551,63 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
                 wrbuf_destroy(addinfo_wr);
                 wrbuf_destroy(sparql_wr);
             }
+        }
+    }
+    else if (apdu_req->which == Z_APDU_presentRequest)
+    {
+        Z_PresentRequest *req = apdu_req->u.presentRequest;
+        FrontendSets::iterator fset_it =
+            m_frontend_sets.find(req->resultSetId);
+        if (fset_it == m_frontend_sets.end())
+        {
+            apdu_res =
+                odr.create_presentResponse(
+                    apdu_req, YAZ_BIB1_SPECIFIED_RESULT_SET_DOES_NOT_EXIST,
+                    req->resultSetId);
+            package.response() = apdu_res;
+            return;
+        }
+        int number_returned = 0;
+        int next_position = 0;
+        int error_code = 0;
+        std::string addinfo;
+        Z_ElementSetNames *esn = 0;
+        if (req->recordComposition)
+        {
+            if (req->recordComposition->which == Z_RecordComp_simple)
+                esn = req->recordComposition->u.simple;
+            else
+            {
+                apdu_res =
+                    odr.create_presentResponse(
+                        apdu_req,
+                        YAZ_BIB1_ONLY_A_SINGLE_ELEMENT_SET_NAME_SUPPORTED,
+                        0);
+                package.response() = apdu_res;
+                return;
+            }
+        }
+        Z_Records *records = fetch(
+            fset_it->second,
+            odr, req->preferredRecordSyntax, esn,
+            *req->resultSetStartPoint, *req->numberOfRecordsRequested,
+            error_code, addinfo,
+            &number_returned,
+            &next_position);
+        if (error_code)
+        {
+            apdu_res =
+                odr.create_presentResponse(apdu_req, error_code,
+                                           addinfo.c_str());
+        }
+        else
+        {
+            apdu_res =
+                odr.create_presentResponse(apdu_req, 0, 0);
+            Z_PresentResponse *resp = apdu_res->u.presentResponse;
+            resp->records = records;
+            *resp->numberOfRecordsReturned = number_returned;
+            *resp->nextResultSetPosition = next_position;
         }
     }
     else
