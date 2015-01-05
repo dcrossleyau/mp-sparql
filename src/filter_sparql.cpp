@@ -371,7 +371,24 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
 
     Z_GDU *gdu_resp = http_package.response().get();
     Z_APDU *apdu_res = 0;
-    if (gdu_resp && gdu_resp->which == Z_GDU_HTTP_Response)
+    if (!gdu_resp || gdu_resp->which != Z_GDU_HTTP_Response)
+    {
+        yaz_log(YLOG_LOG, "sparql: no HTTP response");
+        apdu_res = odr.create_searchResponse(apdu_req,
+                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
+                                             "no HTTP response from backend");
+    }
+    else if (gdu_resp->u.HTTP_Response->code != 200)
+    {
+        mp::wrbuf w;
+
+        wrbuf_printf(w, "sparql: HTTP error %d from backend",
+                     gdu_resp->u.HTTP_Response->code);
+        apdu_res = odr.create_searchResponse(apdu_req,
+                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
+                                             w.c_str());
+    }
+    else
     {
         Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
         FrontendSetPtr fset(new FrontendSet);
@@ -428,13 +445,6 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
                 resp->records = records;
             }
         }
-    }
-    else
-    {
-        yaz_log(YLOG_LOG, "sparql: no HTTP response");
-        apdu_res = odr.create_searchResponse(apdu_req,
-                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
-                                             "no HTTP response from backend");
     }
     return apdu_res;
 }
