@@ -1,0 +1,20 @@
+# Metaproxy XML config file schema
+
+namespace mp = "http://indexdata.com/metaproxy"
+
+filter_sparql =
+  attribute type { "xquery" },
+  attribute id { xsd:NCName }?,
+  attribute name { xsd:NCName }?,
+  element mp:db {
+    attribute path { xsd:string },
+    attribute uri { xsd:string },
+    element mp:prefix { xsd:string }+,
+    element mp:field { xsd:string }*,
+    element mp:criteria { xsd:string }*,
+    element mp:index {
+      attribute type { xsd:string },
+      xsd:string
+    }*
+  }+
+

@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = src doc
 .PHONY: $(SUBDIRS) all
 
 all: $(SUBDIRS)

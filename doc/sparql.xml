@@ -1,0 +1,127 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.4//EN"
+    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+]>
+<refentry id="sparql">
+ <refentryinfo>
+  <productname>Metaproxy SPARQL module</productname>
+  <info><orgname>Index Data</orgname></info>
+ </refentryinfo>
+
+ <refmeta>
+  <refentrytitle>sparql</refentrytitle>
+  <manvolnum>3mp</manvolnum>
+  <refmiscinfo class="manual">Metaproxy Module</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>sparql</refname>
+  <refpurpose>
+   Metaproxy Module for accessing a triplestore
+  </refpurpose>
+ </refnamediv>
+
+ <refsect1><title>DESCRIPTION</title>
+  <para>
+   This module translates Z39.50 operations init, search, present to
+   HTTP requests that accesses a remote triplestore via HTTP
+  </para>
+  <para>
+   Configuration consists of one or more db elements. Each db element
+   describes how to access a specific database. The db element takes
+   attributes name of Z39.50 database (<literal>path</literal>) and
+   HTTP access point of triplestore (<literal>uri</literal>). Each
+   db element takes these elements:
+   Configurable values:
+   <variablelist>
+    <varlistentry><term>&lt;prefix/&gt;</term>
+     <listitem>
+      <para>
+       Section that maps prefixes and namespaces for RDF vocabularies.
+       The format is prefix followed by colon, followed by value.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term>&lt;field/&gt;</term>
+     <listitem>
+      <para>
+       Optional section for controlling what data rows are selected in the
+       SPARQL statement and how they are mapped to the output document, all
+       variables (\*) are selected when none is provided.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term>&lt;criteria/&gt;</term>
+     <listitem>
+      <para>
+       section that allows to map static graph patterns for binding
+       variables, narrowing types, etc, or any other WHERE clause criteria
+       static to the Z39.50/SRU database. The final query conversion logic
+       should be able to deduce which optional criteria should be included
+       in the generated SPARQL by analyzing variables required in the query
+       matching and display fields.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term>&lt;index type="attribute"/&gt;</term>
+     <listitem>
+      <para>
+       Section used to declare RPN use attribute strings (indexes) and map
+       them to BIBFRAME graph patterns.
+       Items in this section are expanded during RPN query processing and
+       placeholders (%s, %d) are substituted with query terms.
+       To map a given CQL index (e.g the default keyword index) into
+       multiple entity properties, SPARQL constructs like
+       `OPTIONAL` or `UNION` could be used.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1><title>SCHEMA</title>
+   <literallayout><xi:include
+		     xi:href="filter_sparql.rnc"
+		     xi:parse="text"
+		     xmlns:xi="http://www.w3.org/2001/XInclude" />
+   </literallayout>
+ </refsect1>
+
+ <refsect1><title>EXAMPLES</title>
+  <para>
+   Configuration for database "Default" that allows searching works. Only
+   the field (use attribute) "bf.wtitle" is supported.
+   <screen><![CDATA[
+  <filter type="sparql">
+    <db path="Default" uri="http://bibframe.indexdata.com/sparql/">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <field>?work ?wtitle</field>
+      <criteria>?work a bf:Work</criteria>
+      <criteria>?work bf:workTitle ?wt</criteria>
+      <criteria>?wt bf:titleValue ?wtitle</criteria>
+      <index type="bf.wtitle">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
+    </db>
+  </filter>
+]]>
+   </screen>
+  </para>
+ </refsect1>
+
+ <refsect1><title>SEE ALSO</title>
+  <para>
+   <citerefentry>
+    <refentrytitle>metaproxy</refentrytitle>
+    <manvolnum>1</manvolnum>
+   </citerefentry>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: nxml
+nxml-child-indent: 1
+End:
+-->

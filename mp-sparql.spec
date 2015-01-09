@@ -56,4 +56,4 @@ rm -fr ${RPM_BUILD_ROOT}
 %files
 %defattr(-,root,root)
 %{_libdir}/mp-sparql/*
-# %{_mandir}/man3/sparql.*
+%{_mandir}/man3/sparql.*
