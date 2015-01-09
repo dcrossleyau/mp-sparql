@@ -1,6 +1,7 @@
 ROOT=..
 prefix=/usr
 libdir = ${prefix}/lib
+VERSION := $(shell . $(ROOT)/IDMETA; echo $$VERSION)
 
 ifeq "${MP_CONFIG}" ""
 MP_CONFIG := $(shell if test -x $(ROOT)/../metaproxy/metaproxy-config; then echo $(ROOT)/../metaproxy/metaproxy-config; else echo metaproxy-config; fi)
@@ -12,8 +13,8 @@ MP_SO := metaproxy_filter_sparql.so
 
 O := filter_sparql.o sparql.o
 
-CXXFLAGS := $(MP_CFLAGS) -fPIC
-CFLAGS := $(MP_CFLAGS) -fPIC
+CXXFLAGS := -DVERSION=\"$(VERSION)\" $(MP_CFLAGS) -fPIC
+CFLAGS := -DVERSION=\"$(VERSION)\" $(MP_CFLAGS) -fPIC
 
 all: $(MP_SO)
 
