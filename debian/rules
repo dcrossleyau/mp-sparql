@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+export DH_VERBOSE=1
+
+%:
+	dh $@ --without python-support \
+		--parallel
+
+override_dh_auto_configure:
+	make MP_CONFIG=/usr/bin/metaproxy-config
+

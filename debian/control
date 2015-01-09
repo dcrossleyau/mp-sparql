@@ -1,0 +1,18 @@
+Source: mp-sparql
+Section: web
+Standards-Version: 3.6.2
+Maintainer: Adam Dickmeiss <adam@indexdata.dk>
+Priority: extra
+Build-Depends: debhelper (>= 7),
+	libmetaproxy6-dev,
+	xsltproc,
+	docbook-xsl,
+	docbook-xml
+
+Package: mp-sparql
+Section: libs
+Architecture: any
+Depends: metaproxy6, ${shlibs:Depends}
+Description: triplestore access module
+ mp-sparql is a module that converts Z39.50 requests to HTTP requests fo
+ accessing a triplestore.

@@ -1,4 +1,5 @@
 NAME=mp-sparql
 CENTOS_DIST="centos6"
+DEBIAN_DIST="jessie wheezy"
+UBUNTU_DIST="utopic trusty saucy precise"
 VERSION=0.1
-ARCHS=amd64
