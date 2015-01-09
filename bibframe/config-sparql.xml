@@ -13,13 +13,6 @@
         <message>log</message>
       </filter>
       <include src="triplestore.xml"/>
-      <filter type="log">
-	<message>http</message>
-	<category apdu="true"/>
-      </filter>
-      <filter type="http_client">
-        <x-forwarded-for>true</x-forwarded-for>
-      </filter>
       <filter type="bounce"/>
     </route>
   </routes>
