@@ -1,13 +1,32 @@
 <filters  xmlns="http://indexdata.com/metaproxy">
   <filter type="sparql">
-    <db path="Default" uri="http://bibframe.indexdata.com/sparql/">
+    <db path="work" uri="http://bibframe.indexdata.com/sparql/">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <field>?work ?wtitle</field>
+      <field>DISTINCT ?work ?wtitle ?creatorlabel ?subjectlabel</field>
       <criteria>?work a bf:Work</criteria>
+
       <criteria>?work bf:workTitle ?wt</criteria>
       <criteria>?wt bf:titleValue ?wtitle</criteria>
-      <index type="bf.wtitle">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
+      <index type="4">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
+      <criteria>?work bf:creator ?creator</criteria>
+      <criteria>?creator bf:label ?creatorlabel</criteria>
+      <index type="1003">?creator bf:label %v FILTER(contains(%v, %s))</index>
+      <criteria>?work bf:subject ?subject</criteria>
+      <criteria>?subject bf:label ?subjectlabel</criteria>
+      <index type="21">?subject bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="instance" uri="http://bibframe.indexdata.com/sparql/">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <field>DISTINCT ?instance ?title ?format</field>
+      <criteria>?instance a bf:Instance</criteria>
+
+      <criteria>?instance bf:title ?title</criteria>
+      <index type="4">?instance bf:title %v FILTER(contains(%v, %s))</index>
+      <criteria>?instance bf:format ?format</criteria>
+      <index type="1013">?instance bf:format %s</index>
+
     </db>
   </filter>
   <filter type="log">
