@@ -269,26 +269,67 @@ static xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
 {
     xmlNode *ptr = xmlDocGetRootElement(doc);
     Odr_int cur = 0;
-    for (; ptr; ptr = ptr->next)
-        if (ptr->type == XML_ELEMENT_NODE &&
-            !strcmp((const char *) ptr->name, "sparql"))
-            break;
-    if (ptr)
+
+    if (ptr->type == XML_ELEMENT_NODE &&
+        !strcmp((const char *) ptr->name, "RDF"))
     {
-        for (ptr = ptr->children; ptr; ptr = ptr->next)
-            if (ptr->type == XML_ELEMENT_NODE &&
-                !strcmp((const char *) ptr->name, "results"))
-                break;
-    }
-    if (ptr)
-    {
-        for (ptr = ptr->children; ptr; ptr = ptr->next)
-            if (ptr->type == XML_ELEMENT_NODE &&
-                !strcmp((const char *) ptr->name, "result"))
-            {
-                if (cur++ == pos)
-                    break;
+        ptr = ptr->children;
+
+        while (ptr && ptr->type != XML_ELEMENT_NODE)
+            ptr = ptr->next;
+        if (ptr && ptr->type == XML_ELEMENT_NODE &&
+            !strcmp((const char *) ptr->name, "Description"))
+        {
+            xmlNode *p = ptr->children;
+
+            while (p && p->type != XML_ELEMENT_NODE)
+                p = p->next;
+            if (p && p->type == XML_ELEMENT_NODE &&
+                !strcmp((const char *) p->name, "type"))
+            { /* SELECT RESULT */
+                for (ptr = ptr->children; ptr; ptr = ptr->next)
+                    if (ptr->type == XML_ELEMENT_NODE &&
+                        !strcmp((const char *) ptr->name, "solution"))
+                    {
+                        if (cur++ == pos)
+                            break;
+                    }
             }
+            else
+            {   /* CONSTRUCT result */
+                for (; ptr; ptr = ptr->next)
+                    if (ptr->type == XML_ELEMENT_NODE &&
+                        !strcmp((const char *) ptr->name, "Description"))
+                    {
+                        if (cur++ == pos)
+                            break;
+                    }
+            }
+        }
+    }
+    else
+    {
+        for (; ptr; ptr = ptr->next)
+            if (ptr->type == XML_ELEMENT_NODE &&
+                !strcmp((const char *) ptr->name, "sparql"))
+                break;
+        if (ptr)
+        {
+            for (ptr = ptr->children; ptr; ptr = ptr->next)
+                if (ptr->type == XML_ELEMENT_NODE &&
+                    !strcmp((const char *) ptr->name, "results"))
+                    break;
+        }
+        if (ptr)
+        {
+            for (ptr = ptr->children; ptr; ptr = ptr->next)
+                if (ptr->type == XML_ELEMENT_NODE &&
+                    !strcmp((const char *) ptr->name, "result"))
+                {
+                    if (cur++ == pos)
+                        break;
+                }
+        }
     }
     if (sz)
         *sz = cur;
@@ -321,7 +362,6 @@ Z_Records *yf::SPARQL::Session::fetch(
         if (!node)
             break;
         assert(node->type == XML_ELEMENT_NODE);
-        assert(!strcmp((const char *) node->name, "result"));
         xmlNode *tmp = xmlCopyNode(node, 1);
         xmlBufferPtr buf = xmlBufferCreate();
         xmlNodeDump(buf, tmp->doc, tmp, 0, 0);
@@ -353,6 +393,8 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
 
     z_HTTP_header_add(odr, &gdu->u.HTTP_Request->headers,
                       "Content-Type", "application/x-www-form-urlencoded");
+    z_HTTP_header_add(odr, &gdu->u.HTTP_Request->headers,
+                      "Accept", "application/rdf+xml");
     const char *names[2];
     names[0] = "query";
     names[1] = 0;

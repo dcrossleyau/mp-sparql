@@ -41,12 +41,11 @@
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry><term>&lt;field/&gt;</term>
+    <varlistentry><term>&lt;form/&gt;</term>
      <listitem>
       <para>
-       Optional section for controlling what data rows are selected in the
-       SPARQL statement and how they are mapped to the output document, all
-       variables (\*) are selected when none is provided.
+       SPARQL Query formulation selection. SHould start with one of the
+       query forms: SELECT or CONSTRUCT.
       </para>
      </listitem>
     </varlistentry>

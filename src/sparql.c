@@ -322,7 +322,7 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
         {
             ;
         }
-        else if (!strncmp(e->pattern, "field", 5))
+        else if (!strcmp(e->pattern, "form"))
         {
             ;
         }
@@ -332,10 +332,9 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
         }
     }
     pr("\n", client_data);
-    pr("SELECT", client_data);
     for (e = s->conf; e; e = e->next)
     {
-        if (!strncmp(e->pattern, "field", 5))
+        if (!strcmp(e->pattern, "form"))
         {
             pr(" ", client_data);
             pr(e->value, client_data);
