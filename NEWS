@@ -1,0 +1,11 @@
+--- 0.2 2015/01/28
+
+Result construction MPSPARQL-4
+Configuration item "field" replaced by "form", which allows
+SELECT/CONSTRUCT to be defined. The triple store is now returning
+application/rdf+xml response and this is what's decoded.
+
+Database work+instance with basic Bib-1 attributes
+
+--- 0.1 2015/01/09
+
