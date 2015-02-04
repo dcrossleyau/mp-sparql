@@ -60,6 +60,7 @@ namespace metaproxy_1 {
         public:
             std::string db;
             std::string uri;
+            std::string schema;
             yaz_sparql_t s;
             ~Conf();
         };
@@ -77,6 +78,7 @@ namespace metaproxy_1 {
             friend class Session;
             Odr_int hits;
             std::string db;
+            ConfPtr conf;
             xmlDoc *doc;
         };
         class SPARQL::Session {
@@ -88,7 +90,7 @@ namespace metaproxy_1 {
                                Z_APDU *apdu_req,
                                mp::odr &odr,
                                const char *sparql_query,
-                               const char *uri);
+                               ConfPtr conf);
             Z_Records *fetch(
                 FrontendSetPtr fset,
                 ODR odr, Odr_oid *preferredRecordSyntax,
@@ -145,6 +147,8 @@ void yf::SPARQL::configure(const xmlNode *xmlnode, bool test_only,
                     conf->db = mp::xml::get_text(attr->children);
                 else if (!strcmp((const char *) attr->name, "uri"))
                     conf->uri = mp::xml::get_text(attr->children);
+                else if (!strcmp((const char *) attr->name, "schema"))
+                    conf->schema = mp::xml::get_text(attr->children);
                 else
                     throw mp::filter::FilterException(
                         "Bad attribute " + std::string((const char *)
@@ -344,6 +348,20 @@ Z_Records *yf::SPARQL::Session::fetch(
     int *number_returned, int *next_position)
 {
     Z_Records *rec = (Z_Records *) odr_malloc(odr, sizeof(Z_Records));
+    if (esn && esn->which == Z_ElementSetNames_generic &&
+        fset->conf->schema.length())
+    {
+        if (strcmp(esn->u.generic, fset->conf->schema.c_str()))
+        {
+            rec->which = Z_Records_NSD;
+            rec->u.nonSurrogateDiagnostic =
+                zget_DefaultDiagFormat(
+                    odr,
+                    YAZ_BIB1_SPECIFIED_ELEMENT_SET_NAME_NOT_VALID_FOR_SPECIFIED_,
+                    esn->u.generic);
+            return rec;
+        }
+    }
     rec->which = Z_Records_DBOSD;
     rec->u.databaseOrSurDiagnostics = (Z_NamePlusRecordList *)
         odr_malloc(odr, sizeof(Z_NamePlusRecordList));
@@ -383,18 +401,19 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
                                         Z_APDU *apdu_req,
                                         mp::odr &odr,
                                         const char *sparql_query,
-                                        const char *uri)
+                                        ConfPtr conf)
 {
     Z_SearchRequest *req = apdu_req->u.searchRequest;
     Package http_package(package.session(), package.origin());
 
     http_package.copy_filter(package);
-    Z_GDU *gdu = z_get_HTTP_Request_uri(odr, uri, 0, 1);
+    Z_GDU *gdu = z_get_HTTP_Request_uri(odr, conf->uri.c_str(), 0, 1);
 
     z_HTTP_header_add(odr, &gdu->u.HTTP_Request->headers,
                       "Content-Type", "application/x-www-form-urlencoded");
     z_HTTP_header_add(odr, &gdu->u.HTTP_Request->headers,
-                      "Accept", "application/rdf+xml");
+                      "Accept", "application/sparql-results+xml,"
+                      "application/rdf+xml");
     const char *names[2];
     names[0] = "query";
     names[1] = 0;
@@ -437,6 +456,7 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
 
         fset->doc = xmlParseMemory(resp->content_buf, resp->content_len);
         fset->db = req->databaseNames[0];
+        fset->conf = conf;
         if (!fset->doc)
             apdu_res = odr.create_searchResponse(apdu_req,
                                              YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
@@ -597,8 +617,7 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
                 else
                 {
                     apdu_res = run_sparql(package, apdu_req, odr,
-                                          wrbuf_cstr(sparql_wr),
-                                          (*it)->uri.c_str());
+                                          wrbuf_cstr(sparql_wr), *it);
                 }
                 wrbuf_destroy(addinfo_wr);
                 wrbuf_destroy(sparql_wr);

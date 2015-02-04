@@ -9,6 +9,7 @@ filter_sparql =
   element mp:db {
     attribute path { xsd:string },
     attribute uri { xsd:string },
+    attribute schema { xsd:string },
     element mp:prefix { xsd:string }+,
     element mp:field { xsd:string }*,
     element mp:criteria { xsd:string }*,

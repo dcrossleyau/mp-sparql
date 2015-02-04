@@ -29,7 +29,10 @@
    Configuration consists of one or more db elements. Each db element
    describes how to access a specific database. The db element takes
    attributes name of Z39.50 database (<literal>path</literal>) and
-   HTTP access point of triplestore (<literal>uri</literal>). Each
+   HTTP access point of triplestore (<literal>uri</literal>).
+   Optionally, the schema for the database may be given with attribute
+   <literal>schema</literal>.
+   Each
    db element takes these elements:
    Configurable values:
    <variablelist>
@@ -92,10 +95,13 @@
    the field (use attribute) "bf.wtitle" is supported.
    <screen><![CDATA[
   <filter type="sparql">
-    <db path="Default" uri="http://bibframe.indexdata.com/sparql/">
+    <db path="Default"
+        uri="http://bibframe.indexdata.com/sparql/"
+        schema="sparql-results"
+    >
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <field>?work ?wtitle</field>
+      <field>SELECT ?work ?wtitle</field>
       <criteria>?work a bf:Work</criteria>
       <criteria>?work bf:workTitle ?wt</criteria>
       <criteria>?wt bf:titleValue ?wtitle</criteria>

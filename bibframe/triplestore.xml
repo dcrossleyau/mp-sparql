@@ -1,6 +1,6 @@
 <filters  xmlns="http://indexdata.com/metaproxy">
   <filter type="sparql">
-    <db path="work" uri="http://bibframe.indexdata.com/sparql/">
+    <db path="work" uri="http://bibframe.indexdata.com/sparql/" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>SELECT DISTINCT ?work ?wtitle ?creatorlabel ?subjectlabel</form>
@@ -16,7 +16,7 @@
       <criteria>?subject bf:label ?subjectlabel</criteria>
       <index type="21">?subject bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="works" uri="http://bibframe.indexdata.com/sparql/">
+    <db path="works" uri="http://bibframe.indexdata.com/sparql/" schema="rdf">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>CONSTRUCT {  ?work bf:title ?title . ?work bf:author ?creator . ?work bf:instanceTitle ?it }</form>
@@ -32,7 +32,7 @@
       <criteria>?subject bf:label ?subjectlabel</criteria>
       <index type="21">?subject bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="instance" uri="http://bibframe.indexdata.com/sparql/">
+    <db path="instance" uri="http://bibframe.indexdata.com/sparql/" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>SELECT DISTINCT ?instance ?title ?format</form>
