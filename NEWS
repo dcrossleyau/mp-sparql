@@ -1,3 +1,9 @@
+--- 0.3 2015/02/06
+
+bibframe sample config in /usr/share/mp-sparql/bibframe MPSPARQL-6
+
+schema check and accept header update MPSPARQL-5
+
 --- 0.2 2015/01/28
 
 Result construction MPSPARQL-4
