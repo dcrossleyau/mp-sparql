@@ -49,7 +49,7 @@ make \
 	MP_CONFIG=/usr/bin/metaproxy-config
 
 %install
-make DESTDIR=${RPM_BUILD_ROOT} libdir=%{_libdir} install
+make install DESTDIR=${RPM_BUILD_ROOT} prefix=%{_prefix} libdir=%{_libdir}
 
 %clean
 rm -fr ${RPM_BUILD_ROOT}
@@ -58,3 +58,4 @@ rm -fr ${RPM_BUILD_ROOT}
 %defattr(-,root,root)
 %{_libdir}/mp-sparql/*
 %{_mandir}/man3/sparql.*
+%{_datadir}/mp-sparql
