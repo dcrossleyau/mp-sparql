@@ -269,14 +269,24 @@ void yf::SPARQL::release_session(Package &package) const
     }
 }
 
-static xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
+static bool get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos,
+                       xmlDoc **ndoc)
 {
     xmlNode *ptr = xmlDocGetRootElement(doc);
+    xmlNode *q0;
     Odr_int cur = 0;
+
+    if (ndoc)
+        *ndoc = xmlNewDoc(BAD_CAST "1.0");
 
     if (ptr->type == XML_ELEMENT_NODE &&
         !strcmp((const char *) ptr->name, "RDF"))
     {
+        if (ndoc)
+        {
+            q0 = xmlCopyNode(ptr, 2);
+            xmlDocSetRootElement(*ndoc, q0);
+        }
         ptr = ptr->children;
 
         while (ptr && ptr->type != XML_ELEMENT_NODE)
@@ -296,7 +306,14 @@ static xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
                         !strcmp((const char *) ptr->name, "solution"))
                     {
                         if (cur++ == pos)
+                        {
+                            if (ndoc)
+                            {
+                                xmlNode *q1 = xmlCopyNode(ptr, 1);
+                                xmlAddChild(q0, q1);
+                            }
                             break;
+                        }
                     }
             }
             else
@@ -306,7 +323,14 @@ static xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
                         !strcmp((const char *) ptr->name, "Description"))
                     {
                         if (cur++ == pos)
-                            break;
+                        {
+                            if (ndoc)
+                            {
+                                xmlNode *q1 = xmlCopyNode(ptr, 1);
+                                xmlAddChild(q0, q1);
+                            }
+                            return true;
+                        }
                     }
             }
         }
@@ -319,6 +343,11 @@ static xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
                 break;
         if (ptr)
         {
+            if (ndoc)
+            {
+                q0 = xmlCopyNode(ptr, 2);
+                xmlDocSetRootElement(*ndoc, q0);
+            }
             for (ptr = ptr->children; ptr; ptr = ptr->next)
                 if (ptr->type == XML_ELEMENT_NODE &&
                     !strcmp((const char *) ptr->name, "results"))
@@ -326,18 +355,31 @@ static xmlNode *get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos)
         }
         if (ptr)
         {
+            xmlNode *q1 = 0;
+            if (ndoc)
+            {
+                q1 = xmlCopyNode(ptr, 0);
+                xmlAddChild(q0, q1);
+            }
             for (ptr = ptr->children; ptr; ptr = ptr->next)
                 if (ptr->type == XML_ELEMENT_NODE &&
                     !strcmp((const char *) ptr->name, "result"))
                 {
                     if (cur++ == pos)
-                        break;
+                    {
+                        if (ndoc)
+                        {
+                            xmlNode *q2 = xmlCopyNode(ptr, 1);
+                            xmlAddChild(q1, q2);
+                        }
+                        return true;
+                    }
                 }
         }
     }
     if (sz)
         *sz = cur;
-    return ptr;
+    return false;
 }
 
 Z_Records *yf::SPARQL::Session::fetch(
@@ -375,17 +417,25 @@ Z_Records *yf::SPARQL::Session::fetch(
         Z_NamePlusRecord *npr = rec->u.databaseOrSurDiagnostics->records[i];
         npr->databaseName = odr_strdup(odr, fset->db.c_str());
         npr->which = Z_NamePlusRecord_databaseRecord;
+        xmlDoc *ndoc = 0;
 
-        xmlNode *node = get_result(fset->doc, 0, start - 1 + i);
-        if (!node)
+        if (!get_result(fset->doc, 0, start - 1 + i, &ndoc))
+        {
+            if (ndoc)
+                xmlFreeDoc(ndoc);
             break;
-        assert(node->type == XML_ELEMENT_NODE);
-        xmlNode *tmp = xmlCopyNode(node, 1);
+        }
+        xmlNode *ndoc_root = xmlDocGetRootElement(ndoc);
+        if (!ndoc_root)
+        {
+            xmlFreeDoc(ndoc);
+            break;
+        }
         xmlBufferPtr buf = xmlBufferCreate();
-        xmlNodeDump(buf, tmp->doc, tmp, 0, 0);
+        xmlNodeDump(buf, ndoc, ndoc_root, 0, 0);
         npr->u.databaseRecord =
             z_ext_record_xml(odr, (const char *) buf->content, buf->use);
-        xmlFreeNode(tmp);
+        xmlFreeDoc(ndoc);
         xmlBufferFree(buf);
     }
     rec->u.databaseOrSurDiagnostics->num_records = i;
@@ -469,7 +519,7 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
             int error_code = 0;
             std::string addinfo;
 
-            get_result(fset->doc, &fset->hits, -1);
+            get_result(fset->doc, &fset->hits, -1, 0);
             m_frontend_sets[req->resultSetName] = fset;
 
             Odr_int number = 0;
