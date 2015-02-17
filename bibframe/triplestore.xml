@@ -21,6 +21,12 @@
       <index type="4">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
       <index type="1003">?creator bf:label %v FILTER(contains(%v, %s))</index>
       <index type="21">?subject bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="1016"> { 
+                { ?wt bf:titleValue %v FILTER(contains(%v, %s)) } 
+          UNION { ?creator bf:label %v FILTER(contains(%v, %s)) } 
+          UNION { ?subject bf:label %v FILTER(contains(%v, %s)) } 
+          }
+      </index>
     </db>
     <db path="works" uri="http://bibframe.indexdata.com/sparql/" schema="rdf">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
