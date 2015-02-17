@@ -6,14 +6,20 @@
       <form>SELECT DISTINCT ?work ?wtitle ?creatorlabel ?subjectlabel</form>
       <criteria>?work a bf:Work</criteria>
 
-      <criteria>?work bf:workTitle ?wt</criteria>
-      <criteria>?wt bf:titleValue ?wtitle</criteria>
+      <criteria> OPTIONAL {
+          ?work bf:workTitle ?wt .
+          ?wt bf:titleValue ?wtitle }
+      </criteria>
+      <criteria> OPTIONAL {
+          ?work bf:creator ?creator .
+          ?creator bf:label ?creatorlabel }
+      </criteria>
+      <criteria>OPTIONAL {
+          ?work bf:subject ?subject .
+          ?subject bf:label ?subjectlabel }
+      </criteria>
       <index type="4">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
-      <criteria>?work bf:creator ?creator</criteria>
-      <criteria>?creator bf:label ?creatorlabel</criteria>
       <index type="1003">?creator bf:label %v FILTER(contains(%v, %s))</index>
-      <criteria>?work bf:subject ?subject</criteria>
-      <criteria>?subject bf:label ?subjectlabel</criteria>
       <index type="21">?subject bf:label %v FILTER(contains(%v, %s))</index>
     </db>
     <db path="works" uri="http://bibframe.indexdata.com/sparql/" schema="rdf">
