@@ -77,6 +77,15 @@
       </para>
      </listitem>
     </varlistentry>
+    <varlistentry><term>&lt;modifier/&gt;</term>
+     <listitem>
+      <para>
+       Optional section that allows you to add solution sequences or
+       modifiers.
+      </para>
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
  </refsect1>
