@@ -326,21 +326,23 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
         {
             ;
         }
+        else if (!strcmp(e->pattern, "modifier"))
+        {
+            ;
+        }
         else
         {
             errors++;
         }
     }
-    pr("\n", client_data);
     for (e = s->conf; e; e = e->next)
     {
         if (!strcmp(e->pattern, "form"))
         {
-            pr(" ", client_data);
             pr(e->value, client_data);
+            pr("\n", client_data);
         }
     }
-    pr("\n", client_data);
     pr("WHERE {\n", client_data);
     for (e = s->conf; e; e = e->next)
     {
@@ -397,6 +399,15 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
         wrbuf_destroy(vars);
     }
     pr("\n}\n", client_data);
+
+    for (e = s->conf; e; e = e->next)
+    {
+        if (!strcmp(e->pattern, "modifier"))
+        {
+            pr(e->value, client_data);
+            pr(e->value, "\n");
+        }
+    }
     yaz_tok_cfg_destroy(cfg);
 
     return errors ? -1 : r;

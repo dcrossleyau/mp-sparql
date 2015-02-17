@@ -16,6 +16,7 @@ filter_sparql =
     element mp:index {
       attribute type { xsd:string },
       xsd:string
-    }*
+    }*,
+    element mp:modifier { xsd:string }*
   }+
 
