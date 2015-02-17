@@ -3,7 +3,12 @@
     <db path="work" uri="http://bibframe.indexdata.com/sparql/" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT ?work ?wtitle ?creatorlabel ?subjectlabel</form>
+      <form>SELECT 
+              ?work 
+              MAX(?wtitle) AS ?title
+              MAX(?creatorlabel) AS ?creator
+              MAX(?subjectlabel) AS ?subject
+      </form>
       <criteria>?work a bf:Work</criteria>
 
       <criteria> OPTIONAL {
@@ -27,6 +32,7 @@
           UNION { ?subject bf:label %v FILTER(contains(%v, %s)) } 
           }
       </index>
+      <modifier>GROUP BY $work</modifier>
     </db>
     <db path="works" uri="http://bibframe.indexdata.com/sparql/" schema="rdf">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
