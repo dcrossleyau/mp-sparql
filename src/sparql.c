@@ -405,7 +405,7 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
         if (!strcmp(e->pattern, "modifier"))
         {
             pr(e->value, client_data);
-            pr(e->value, "\n");
+            pr("\n", client_data);
         }
     }
     yaz_tok_cfg_destroy(cfg);
