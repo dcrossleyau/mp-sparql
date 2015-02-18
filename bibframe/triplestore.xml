@@ -32,11 +32,17 @@
             ?child ?op2 %v FILTER(contains(STR(%v), %s))
           }
       </index>
+      <modifier>GROUP BY $work</modifier>
     </db>
     <db path="works" schema="rdf">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>CONSTRUCT {  ?work bf:title ?title . ?work bf:author ?creator . ?work bf:instanceTitle ?it }</form>
+      <form>CONSTRUCT { 
+          ?work bf:title ?wtitle . 
+          ?work bf:instanceTitle ?title .
+          ?work bf:author ?creator . 
+          ?work bf:subject ?subjectlabel }
+      </form>
       <criteria>?work a bf:Work</criteria>
 
       <criteria>?work bf:workTitle ?wt</criteria>
@@ -52,7 +58,7 @@
     <db path="instance" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT ?instance ?title ?format</form>
+      <form>SELECT ?instance ?title ?format</form>
       <criteria>?instance a bf:Instance</criteria>
 
       <criteria>?instance bf:title ?title</criteria>
