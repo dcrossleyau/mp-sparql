@@ -6,6 +6,9 @@ filter_sparql =
   attribute type { "xquery" },
   attribute id { xsd:NCName }?,
   attribute name { xsd:NCName }?,
+  element mp:defaults {
+    attribute uri { xsd:string }
+  }?,
   element mp:db {
     attribute path { xsd:string },
     attribute uri { xsd:string },
@@ -19,4 +22,3 @@ filter_sparql =
     }*,
     element mp:modifier { xsd:string }*
   }+
-

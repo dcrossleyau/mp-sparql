@@ -129,16 +129,31 @@ void yf::SPARQL::configure(const xmlNode *xmlnode, bool test_only,
                            const char *path)
 {
     const xmlNode *ptr = xmlnode->children;
+    std::string uri;
 
     for (; ptr; ptr = ptr->next)
     {
         if (ptr->type != XML_ELEMENT_NODE)
             continue;
-        if (!strcmp((const char *) ptr->name, "db"))
+        if (!strcmp((const char *) ptr->name, "defaults"))
+        {
+            const struct _xmlAttr *attr;
+            for (attr = ptr->properties; attr; attr = attr->next)
+            {
+                if (!strcmp((const char *) attr->name, "uri"))
+                    uri = mp::xml::get_text(attr->children);
+                else
+                    throw mp::filter::FilterException(
+                        "Bad attribute " + std::string((const char *)
+                                                       attr->name));
+            }
+        }
+        else if (!strcmp((const char *) ptr->name, "db"))
         {
             yaz_sparql_t s = yaz_sparql_create();
             ConfPtr conf(new Conf);
             conf->s = s;
+            conf->uri = uri;
 
             const struct _xmlAttr *attr;
             for (attr = ptr->properties; attr; attr = attr->next)
