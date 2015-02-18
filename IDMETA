@@ -1,5 +1,5 @@
 NAME=mp-sparql
-CENTOS_DIST="centos6"
 DEBIAN_DIST="jessie wheezy"
 UBUNTU_DIST="utopic trusty saucy precise"
+CENTOS_DIST="centos5 centos6"
 VERSION=0.3
