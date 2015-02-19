@@ -101,7 +101,7 @@
  <refsect1><title>EXAMPLE</title>
   <para>
    Configuration for database "Default" that allows searching works. Only
-   the field (use attribute) "bf.wtitle" is supported. 
+   the field (use attribute) "bf.wtitle" is supported.
    <screen><![CDATA[
   <filter type="sparql">
     <db path="Default"
@@ -167,16 +167,16 @@
    <para>
     This returns one row for each work. Titles, authors, and subjects
     are all optional. If they repeat, the repeated values are concatenated into
-    a single field, separated by semicolons. This is done by the GROUP_DIGEST 
-    function that is specific to the Virtuoso back end. 
+    a single field, separated by semicolons. This is done by the GROUP_DIGEST
+    function that is specific to the Virtuoso back end.
    </para>
    <para>
-    This example supports use attributes 4 (title), 1003 (author), 21 (subject), 
-    and 1016 (keyword) which matches any literal in a triplet that refers to the 
-    work, so it works for the titleValue in the workTitle, as well as the label 
-    in the subject, and what ever else there may be. Like the preceding example, 
-    the matching is by a simple substring, case sensitive. A more realistic term 
-    matching could be done with regular expressions, at the cost of some readability 
+    This example supports use attributes 4 (title), 1003 (author), 21 (subject),
+    and 1016 (keyword) which matches any literal in a triplet that refers to the
+    work, so it works for the titleValue in the workTitle, as well as the label
+    in the subject, and what ever else there may be. Like the preceding example,
+    the matching is by a simple substring, case sensitive. A more realistic term
+    matching could be done with regular expressions, at the cost of some readability
     portability, and performance.
    </para>
  </refsect1>
@@ -188,10 +188,10 @@
     <db path="works" schema="rdf">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>CONSTRUCT { 
-          ?work bf:title ?wtitle . 
+      <form>CONSTRUCT {
+          ?work bf:title ?wtitle .
           ?work bf:instanceTitle ?title .
-          ?work bf:author ?creator . 
+          ?work bf:author ?creator .
           ?work bf:subject ?subjectlabel }
       </form>
       <criteria>?work a bf:Work</criteria>
@@ -215,8 +215,8 @@
    <para>
     Configuration for database "instance". Like "work" above this uses SELECT
     to return row-based data, this time from the instances. This is not deduplicated,
-    so if an instance has two titles, we get two rows, and if it also has 
-    two formats, we get four rows. The DISTINCT in the SELECT 
+    so if an instance has two titles, we get two rows, and if it also has
+    two formats, we get four rows. The DISTINCT in the SELECT
    <screen><![CDATA[
     <db path="instance" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
@@ -232,9 +232,9 @@
    </screen>
   </para>
 
-  
+
  </refsect1>
- 
+
  <refsect1><title>SEE ALSO</title>
   <para>
    <citerefentry>
