@@ -1,3 +1,5 @@
+--- 0.4 2015/02/19
+
 Extend man page with examples - based in the triplestore.xml.
 
 Add keyword search for database "work" in triplestore.xml MPSPARQL-7
