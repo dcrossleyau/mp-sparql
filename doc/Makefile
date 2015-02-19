@@ -17,6 +17,9 @@ all: $(MANFILES)
 index.html: $(XMLFILES)
 	$(HTML_COMPILE) book.xml
 
+sparql.html: sparql.xml
+	$(HTML_COMPILE) sparql.xml
+
 manref.xml: $(REFFILES)
 	rm -f manref.xml
 	for i in $(REFFILES); do \
