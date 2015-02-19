@@ -1,3 +1,13 @@
+Extend man page with examples - based in the triplestore.xml.
+
+Add keyword search for database "work" in triplestore.xml MPSPARQL-7
+
+Use OPTIONAL for all fields in the "work" database MPSPARQL-8
+
+Allow solution sequence / modifier MPSPARQL-9
+
+Allow triplestore endpoint to be given once MPSPARQL-10
+
 --- 0.3 2015/02/06
 
 bibframe sample config in /usr/share/mp-sparql/bibframe MPSPARQL-6
