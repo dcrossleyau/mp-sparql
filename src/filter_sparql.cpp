@@ -38,6 +38,7 @@ namespace metaproxy_1 {
             class Session;
             class Rep;
             class Conf;
+            class Result;
             class FrontendSet;
 
             typedef boost::shared_ptr<Session> SessionPtr;
@@ -70,16 +71,22 @@ namespace metaproxy_1 {
             boost::mutex m_mutex;
             std::map<mp::Session,SessionPtr> m_clients;
         };
-        class SPARQL::FrontendSet {
+        class SPARQL::Result {
         public:
-            FrontendSet();
-            ~FrontendSet();
+            Result();
+            ~Result();
+        private:
+            friend class FrontendSet;
+            friend class Session;
+            ConfPtr conf;
+            xmlDoc *doc;
+        };
+        class SPARQL::FrontendSet {
         private:
             friend class Session;
             Odr_int hits;
             std::string db;
-            ConfPtr conf;
-            xmlDoc *doc;
+            std::list<Result> results;
         };
         class SPARQL::Session {
         public:
@@ -90,7 +97,7 @@ namespace metaproxy_1 {
                                Z_APDU *apdu_req,
                                mp::odr &odr,
                                const char *sparql_query,
-                               ConfPtr conf);
+                               ConfPtr conf, FrontendSetPtr fset);
             Z_Records *fetch(
                 FrontendSetPtr fset,
                 ODR odr, Odr_oid *preferredRecordSyntax,
@@ -106,13 +113,13 @@ namespace metaproxy_1 {
     }
 }
 
-yf::SPARQL::FrontendSet::~FrontendSet()
+yf::SPARQL::Result::~Result()
 {
     if (doc)
         xmlFreeDoc(doc);
 }
 
-yf::SPARQL::FrontendSet::FrontendSet()
+yf::SPARQL::Result::Result()
 {
     doc = 0;
 }
@@ -405,10 +412,17 @@ Z_Records *yf::SPARQL::Session::fetch(
     int *number_returned, int *next_position)
 {
     Z_Records *rec = (Z_Records *) odr_malloc(odr, sizeof(Z_Records));
-    if (esn && esn->which == Z_ElementSetNames_generic &&
-        fset->conf->schema.length())
+    std::list<Result>::iterator it = fset->results.begin();
+    if (esn && esn->which == Z_ElementSetNames_generic && esn->u.generic)
     {
-        if (strcmp(esn->u.generic, fset->conf->schema.c_str()))
+        for (; it != fset->results.end(); it++)
+        {
+            yaz_log(YLOG_LOG, "checking xmldoc=%p schema=%s user-schema=%s",
+                    it->doc, it->conf->schema.c_str(), esn->u.generic);
+            if (!strcmp(esn->u.generic, it->conf->schema.c_str()))
+                break;
+        }
+        if (it == fset->results.end())
         {
             rec->which = Z_Records_NSD;
             rec->u.nonSurrogateDiagnostic =
@@ -434,7 +448,7 @@ Z_Records *yf::SPARQL::Session::fetch(
         npr->which = Z_NamePlusRecord_databaseRecord;
         xmlDoc *ndoc = 0;
 
-        if (!get_result(fset->doc, 0, start - 1 + i, &ndoc))
+        if (!get_result(it->doc, 0, start - 1 + i, &ndoc))
         {
             if (ndoc)
                 xmlFreeDoc(ndoc);
@@ -466,7 +480,7 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
                                         Z_APDU *apdu_req,
                                         mp::odr &odr,
                                         const char *sparql_query,
-                                        ConfPtr conf)
+                                        ConfPtr conf, FrontendSetPtr fset)
 {
     Z_SearchRequest *req = apdu_req->u.searchRequest;
     Package http_package(package.session(), package.origin());
@@ -517,25 +531,29 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
     else
     {
         Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
-        FrontendSetPtr fset(new FrontendSet);
-
-        fset->doc = xmlParseMemory(resp->content_buf, resp->content_len);
-        fset->db = req->databaseNames[0];
-        fset->conf = conf;
-        if (!fset->doc)
+        xmlDocPtr doc = xmlParseMemory(resp->content_buf, resp->content_len);
+        if (!doc)
             apdu_res = odr.create_searchResponse(apdu_req,
                                              YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
                                              "invalid XML from backendbackend");
         else
         {
+            Result result;
             Z_Records *records = 0;
             int number_returned = 0;
             int next_position = 0;
             int error_code = 0;
             std::string addinfo;
 
-            get_result(fset->doc, &fset->hits, -1, 0);
+            result.doc = doc;
+            result.conf = conf;
+            fset->results.push_back(result);
+            yaz_log(YLOG_LOG, "saving sparql result xmldoc=%p", doc);
+
+            get_result(result.doc, &fset->hits, -1, 0);
             m_frontend_sets[req->resultSetName] = fset;
+
+            result.doc = 0;
 
             Odr_int number = 0;
             const char *element_set_name = 0;
@@ -635,7 +653,7 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
                         apdu_req,
                         YAZ_BIB1_RESULT_SET_EXISTS_AND_REPLACE_INDICATOR_OFF,
                         0);
-                package.response() = apdu_res;
+                package.response() = apdu;
             }
             m_frontend_sets.erase(fset_it);
         }
@@ -654,38 +672,42 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
         {
             std::string db = req->databaseNames[0];
             std::list<ConfPtr>::const_iterator it;
+            FrontendSetPtr fset(new FrontendSet);
 
+            m_frontend_sets.erase(req->resultSetName);
+            fset->db = db;
             it = m_sparql->db_conf.begin();
             for (; it != m_sparql->db_conf.end(); it++)
                 if (yaz_match_glob((*it)->db.c_str(), db.c_str()))
-                    break;
-            if (it == m_sparql->db_conf.end())
+                {
+                    WRBUF addinfo_wr = wrbuf_alloc();
+                    WRBUF sparql_wr = wrbuf_alloc();
+                    int error =
+                        yaz_sparql_from_rpn_wrbuf((*it)->s,
+                                                  addinfo_wr, sparql_wr,
+                                                  req->query->u.type_1);
+                    if (error)
+                    {
+                        apdu_res = odr.create_searchResponse(
+                            apdu_req, error,
+                            wrbuf_len(addinfo_wr) ?
+                            wrbuf_cstr(addinfo_wr) : 0);
+                    }
+                    else
+                    {
+                        Z_APDU *apdu_1 = run_sparql(package, apdu_req, odr,
+                                                    wrbuf_cstr(sparql_wr), *it,
+                                                    fset);
+                        if (!apdu_res)
+                            apdu_res = apdu_1;
+                    }
+                    wrbuf_destroy(addinfo_wr);
+                    wrbuf_destroy(sparql_wr);
+                }
+            if (apdu_res == 0)
             {
                 apdu_res = odr.create_searchResponse(
                     apdu_req, YAZ_BIB1_DATABASE_DOES_NOT_EXIST, db.c_str());
-            }
-            else
-            {
-                WRBUF addinfo_wr = wrbuf_alloc();
-                WRBUF sparql_wr = wrbuf_alloc();
-                int error =
-                    yaz_sparql_from_rpn_wrbuf((*it)->s,
-                                              addinfo_wr, sparql_wr,
-                                              req->query->u.type_1);
-                if (error)
-                {
-                    apdu_res = odr.create_searchResponse(
-                        apdu_req, error,
-                        wrbuf_len(addinfo_wr) ?
-                        wrbuf_cstr(addinfo_wr) : 0);
-                }
-                else
-                {
-                    apdu_res = run_sparql(package, apdu_req, odr,
-                                          wrbuf_cstr(sparql_wr), *it);
-                }
-                wrbuf_destroy(addinfo_wr);
-                wrbuf_destroy(sparql_wr);
             }
         }
     }
