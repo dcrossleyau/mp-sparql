@@ -65,7 +65,24 @@
       <index type="4">?instance bf:title %v FILTER(contains(%v, %s))</index>
       <criteria>?instance bf:format ?format</criteria>
       <index type="1013">?instance bf:format %s</index>
-
+    </db>
+    <db path="place" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT ?label ?id ?place ?relatedTo ?authorizedAccessPoint </form>
+      <criteria>?place a bf:Place</criteria>
+      <criteria>?place bf:label ?label</criteria>
+      <criteria>OPTIONAL { ?place bf:identifier ?id}</criteria>
+      <criteria>OPTIONAL { ?place bf:relatedTo ?relatedTo}</criteria>
+      <criteria>OPTIONAL { ?place bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
+      <index type="bf.place">?place bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?place bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="node" schema="rdf">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>DESCRIBE ?node </form>
+      <index type="any">?node ?rel ?obj FILTER( str(?node) = %s )</index>
     </db>
   </filter>
   <filter type="log">
