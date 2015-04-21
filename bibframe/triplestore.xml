@@ -1,6 +1,7 @@
 <filters  xmlns="http://indexdata.com/metaproxy">
   <filter type="sparql">
-    <defaults uri="http://bibframe.indexdata.com/sparql/"/>
+    <!--defaults uri="http://bibframe.indexdata.com/sparql/"/-->
+    <defaults uri="http://localhost:8890/sparql/"/>
     <db path="work" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
@@ -69,7 +70,7 @@
     <db path="place" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT ?label ?id ?place ?relatedTo ?authorizedAccessPoint </form>
+      <form>SELECT DISTINCT ?label ?id ?place ?relatedTo ?authorizedAccessPoint </form>
       <criteria>?place a bf:Place</criteria>
       <criteria>?place bf:label ?label</criteria>
       <criteria>OPTIONAL { ?place bf:identifier ?id}</criteria>
@@ -77,6 +78,78 @@
       <criteria>OPTIONAL { ?place bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
       <index type="bf.place">?place bf:label %v FILTER(contains(%v, %s))</index>
       <index type="any">?place bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="person" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT DISTINCT ?label ?id ?person ?relatedTo ?authorizedAccessPoint </form>
+      <criteria>?person a bf:Person</criteria>
+      <criteria>?person bf:label ?label</criteria>
+      <criteria>OPTIONAL { ?person bf:identifier ?id}</criteria>
+      <criteria>OPTIONAL { ?person bf:relatedTo ?relatedTo}</criteria>
+      <criteria>OPTIONAL { ?person bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
+      <index type="bf.person">?person bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?person bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="meeting" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT DISTINCT ?label ?id ?meeting ?relatedTo ?authorizedAccessPoint </form>
+      <criteria>?meeting a bf:Meeting</criteria>
+      <criteria>?meeting bf:label ?label</criteria>
+      <criteria>OPTIONAL { ?meeting bf:identifier ?id}</criteria>
+      <criteria>OPTIONAL { ?meeting bf:relatedTo ?relatedTo}</criteria>
+      <criteria>OPTIONAL { ?meeting bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
+      <index type="bf.meeting">?meeting bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?meeting bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="agent" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT DISTINCT ?label ?id ?agent ?relatedTo ?authorizedAccessPoint </form>
+      <criteria>?agent a bf:Agent</criteria>
+      <criteria>?agent bf:label ?label</criteria>
+      <criteria>OPTIONAL { ?agent bf:identifier ?id}</criteria>
+      <criteria>OPTIONAL { ?agent bf:relatedTo ?relatedTo}</criteria>
+      <criteria>OPTIONAL { ?agent bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
+      <index type="bf.agent">?agent bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?agent bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="event" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT DISTINCT ?label ?id ?event ?relatedTo ?authorizedAccessPoint </form>
+      <criteria>?event a bf:Event</criteria>
+      <criteria>?event bf:label ?label</criteria>
+      <criteria>OPTIONAL { ?event bf:identifier ?id}</criteria>
+      <criteria>OPTIONAL { ?event bf:relatedTo ?relatedTo}</criteria>
+      <criteria>OPTIONAL { ?event bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
+      <index type="bf.event">?event bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?event bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="organization" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT DISTINCT ?label ?id ?organization ?relatedTo ?authorizedAccessPoint </form>
+      <criteria>?organization a bf:Organization</criteria>
+      <criteria>?organization bf:label ?label</criteria>
+      <criteria>OPTIONAL { ?organization bf:identifier ?id}</criteria>
+      <criteria>OPTIONAL { ?organization bf:relatedTo ?relatedTo}</criteria>
+      <criteria>OPTIONAL { ?organization bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
+      <index type="bf.organization">?organization bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?organization bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+    <db path="topic" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT DISTINCT ?label ?id ?topic ?relatedTo ?authorizedAccessPoint </form>
+      <criteria>?topic a bf:Topic</criteria>
+      <criteria>?topic bf:label ?label</criteria>
+      <criteria>OPTIONAL { ?topic bf:identifier ?id}</criteria>
+      <criteria>OPTIONAL { ?topic bf:relatedTo ?relatedTo}</criteria>
+      <criteria>OPTIONAL { ?topic bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
+      <index type="bf.topic">?topic bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?topic bf:label %v FILTER(contains(%v, %s))</index>
     </db>
     <db path="node" schema="rdf">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
