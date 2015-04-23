@@ -175,11 +175,19 @@
         <index type="bf.parttitle">?title bf:partTitle %v FILTER(contains(%v, %s))</index>
         <index type="any">?title ?rel  %v FILTER(contains(str(%v), %s))</index>
     </db>
-    <db path="node" schema="rdf">
+    <!-- A hack to be able to look at any triplet in the base -->
+    <db path="node" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>DESCRIBE ?node </form>
+      <form>SELECT ?node ?rel ?obj</form>
       <index type="any">?node ?rel ?obj FILTER( str(?node) = %s )</index>
+    </db>
+    <!-- A way to see which triplets refers to a given uri. -->
+    <db path="ref" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT ?node ?rel ?obj</form>
+      <index type="any">?node ?rel ?obj FILTER( str(?obj) = %s )</index>
     </db>
   </filter>
   <filter type="log">
