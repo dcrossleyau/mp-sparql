@@ -183,6 +183,23 @@ static int apt(yaz_sparql_t s, WRBUF addinfo, WRBUF res, WRBUF vars,
                 }
                 wrbuf_puts(addinfo, "\"");
                 break;
+            case 'u':
+                wrbuf_puts(addinfo, "<");
+                switch (term->which)
+                {
+                case Z_Term_general:
+                    wrbuf_json_write(addinfo,
+                                term->u.general->buf, term->u.general->len);
+                    break;
+                case Z_Term_numeric:
+                    wrbuf_printf(addinfo, ODR_INT_PRINTF, *term->u.numeric);
+                    break;
+                case Z_Term_characterString:
+                    wrbuf_json_puts(addinfo, term->u.characterString);
+                    break;
+                }
+                wrbuf_puts(addinfo, ">");
+                break;
             case 'd':
                 switch (term->which)
                 {
