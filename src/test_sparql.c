@@ -73,10 +73,7 @@ static void tst1(void)
                            "bf: <http://bibframe.org/vocab/>");
     yaz_sparql_add_pattern(s, "prefix",
                            "gs: http://gs.com/panorama/domain-model");
-    yaz_sparql_add_pattern(s, "field.title", "?title");
-    yaz_sparql_add_pattern(s, "field.author", "?author");
-    yaz_sparql_add_pattern(s, "field.description", "?description");
-    yaz_sparql_add_pattern(s, "field.instanceTitle", "?ititle");
+    yaz_sparql_add_pattern(s, "form", "SELECT ?title ?author ?description ?ititle");
     yaz_sparql_add_pattern(s, "criteria", "?work a bf:Work");
     yaz_sparql_add_pattern(s, "criteria", "?work bf:workTitle/bf:titleValue ?title");
     yaz_sparql_add_pattern(s, "criteria", "?work bf:creator/bf:label ?author");
@@ -112,7 +109,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -132,7 +128,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -152,7 +147,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -173,7 +167,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -198,7 +191,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -228,7 +220,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -255,7 +246,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -280,7 +270,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -301,7 +290,6 @@ static void tst1(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -329,10 +317,7 @@ static void tst2(void)
                            "bf: <http://bibframe.org/vocab/>");
     yaz_sparql_add_pattern(s, "prefix",
                            "gs: http://gs.com/panorama/domain-model");
-    yaz_sparql_add_pattern(s, "field.title", "?title");
-    yaz_sparql_add_pattern(s, "field.author", "?author");
-    yaz_sparql_add_pattern(s, "field.description", "?description");
-    yaz_sparql_add_pattern(s, "field.instanceTitle", "?ititle");
+    yaz_sparql_add_pattern(s, "form", "SELECT ?title ?author ?description ?ititle");
     yaz_sparql_add_pattern(s, "criteria", "?work a bf:Work");
     yaz_sparql_add_pattern(s, "criteria", "?work bf:workTitle/bf:titleValue ?title");
     yaz_sparql_add_pattern(s, "criteria", "?work bf:creator/bf:label ?author");
@@ -368,7 +353,6 @@ static void tst2(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -388,7 +372,6 @@ static void tst2(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
@@ -407,7 +390,6 @@ static void tst2(void)
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
-                  "\n"
                   "SELECT ?title ?author ?description ?ititle\n"
                   "WHERE {\n"
                   "  ?work a bf:Work .\n"
