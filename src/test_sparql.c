@@ -63,6 +63,51 @@ static int test_query(yaz_sparql_t s, const char *pqf, const char *expect)
     return ret;
 }
 
+static int test_uri(yaz_sparql_t s, const char *uri, const char *schema,
+                    const char *expect)
+{
+    int ret = 0;
+    WRBUF addinfo = wrbuf_alloc();
+    WRBUF w = wrbuf_alloc();
+
+    int r = yaz_sparql_from_uri_wrbuf(s, addinfo, w, uri, schema);
+    if (expect)
+    {
+        if (!r)
+        {
+            if (!strcmp(expect, wrbuf_cstr(w)))
+                ret = 1;
+            else
+            {
+                yaz_log(YLOG_WARN, "test_sparql: uri=%s", uri);
+                yaz_log(YLOG_WARN, " expect: %s", expect);
+                yaz_log(YLOG_WARN, " got:    %s", wrbuf_cstr(w));
+            }
+        }
+        else
+        {
+            yaz_log(YLOG_WARN, "test_sparql: uri=%s", uri);
+            yaz_log(YLOG_WARN, " expect: %s", expect);
+            yaz_log(YLOG_WARN, " got error: %d:%s", r, wrbuf_cstr(addinfo));
+        }
+    }
+    else
+    {
+        if (r)
+            ret = 1;
+        else
+        {
+            yaz_log(YLOG_WARN, "test_sparql: uri=%s", uri);
+            yaz_log(YLOG_WARN, " expect error");
+            yaz_log(YLOG_WARN, " got:    %s", wrbuf_cstr(w));
+        }
+    }
+    wrbuf_destroy(w);
+    wrbuf_destroy(addinfo);
+    return ret;
+}
+
+
 static void tst1(void)
 {
     yaz_sparql_t s = yaz_sparql_create();
@@ -104,6 +149,15 @@ static void tst1(void)
     yaz_sparql_add_pattern(s, "index.bf.targetAudience",
                            "?work bf:targetAudience %s");
     yaz_sparql_add_pattern(s, "index.bf.isbn", "?inst bf:ISBN %s");
+
+    yaz_sparql_add_pattern(s, "uri.full", "SELECT ?sub ?rel WHERE ?work = %u");
+
+    YAZ_CHECK(test_uri(s, "http://x/y", "full",
+                       "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
+                       "PREFIX bf: <http://bibframe.org/vocab/>\n"
+                       "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
+                       "SELECT ?sub ?rel WHERE ?work = <http://x/y>\n"));
+
     YAZ_CHECK(test_query(
                   s, "@attr 1=bf.title computer",
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"

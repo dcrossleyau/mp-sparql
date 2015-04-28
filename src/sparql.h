@@ -31,6 +31,18 @@ YAZ_EXPORT
 int yaz_sparql_from_rpn_wrbuf(yaz_sparql_t s, WRBUF addinfo, WRBUF w,
                               Z_RPNQuery *q);
 
+
+YAZ_EXPORT
+int yaz_sparql_from_uri_stream(yaz_sparql_t s,
+                               WRBUF addinfo,
+                               void (*pr)(const char *buf, void *client_data),
+                               void *client_data,
+                               const char *uri, const char *schema);
+
+YAZ_EXPORT
+int yaz_sparql_from_uri_wrbuf(yaz_sparql_t s, WRBUF addinfo, WRBUF w,
+                              const char *uri, const char *schema);
+
 YAZ_END_CDECL
 
 #endif
