@@ -9,7 +9,7 @@ all: $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
-clean:
+clean check:
 	for d in $(SUBDIRS); do \
 		$(MAKE) -C $$d $@; \
 	done
