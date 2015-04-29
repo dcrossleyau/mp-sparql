@@ -1,3 +1,16 @@
+--- 0.5 2015/04/29
+
+Fix make check fails in src MPSPARQL-14
+
+Add facility for sub query (uri.schema) MPSPARQL-13
+
+%u variable: for <urls> MPSPARQL-12
+
+Database + schema match in sections MPSPARQL-11
+For same database all SPARQL sections are fired off and the relevant
+result (xml documents) are returned for given schema. If schema is not
+given, first defined section will be used.
+
 --- 0.4 2015/02/19
 
 Extend man page with examples - based in the triplestore.xml.
