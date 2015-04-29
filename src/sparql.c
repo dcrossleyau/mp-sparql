@@ -378,11 +378,9 @@ int yaz_sparql_lookup_schema(yaz_sparql_t s, const char *schema)
 
     for (e = s->conf; e; e = e->next)
     {
-        if (!schema && !strcmp(e->pattern, "uri"))
-            break;
-        else if (schema && !strncmp(e->pattern, "uri.", 4))
+        if (!strncmp(e->pattern, "uri.", 4))
         {
-            if (!strcmp(e->pattern + 4, schema))
+            if (!schema || !strcmp(e->pattern + 4, schema))
                 break;
         }
     }
@@ -400,11 +398,9 @@ int yaz_sparql_from_uri_stream(yaz_sparql_t s,
 
     for (e = s->conf; e; e = e->next)
     {
-        if (!schema && !strcmp(e->pattern, "uri"))
-            break;
-        else if (schema && !strncmp(e->pattern, "uri.", 4))
+        if (!strncmp(e->pattern, "uri.", 4))
         {
-            if (!strcmp(e->pattern + 4, schema))
+            if (!schema || !strcmp(e->pattern + 4, schema))
                 break;
         }
     }

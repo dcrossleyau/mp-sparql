@@ -426,13 +426,13 @@ Z_Records *yf::SPARQL::Session::fetch(
 
     for (; it != fset->results.end(); it++)
     {
-        if (schema && !strcmp(esn->u.generic, it->conf->schema.c_str()))
-            break;
         if (yaz_sparql_lookup_schema(it->conf->s, schema))
         {
             uri_lookup = true;
             break;
         }
+        if (!schema || !strcmp(esn->u.generic, it->conf->schema.c_str()))
+            break;
     }
     if (it == fset->results.end())
     {
