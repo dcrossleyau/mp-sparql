@@ -45,13 +45,82 @@
       <criteria>?work ?rel ?obj</criteria>
       <index type="any">?work ?rel ?obj FILTER( str(?work) = %s )</index>
     </db>
+    <!-- Returns a decent-looking rdf (except that mp says 0 hits) 
+    with no links expanded -->
     <db path="onework-l-rdf" schema="rdf">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>CONSTRUCT { ?work ?rel ?subj }
+      <form>CONSTRUCT { ?work ?rel ?obj }
       </form>
       <criteria>?work a bf:Work</criteria>
-      <criteria>?work ?rel ?subj</criteria>
+      <criteria>?work ?rel ?obj</criteria>
+      <index type="any">?work ?rel ?obj FILTER( str(?work) = %s )</index>
+    </db>
+    <!-- Expand some links -->
+    <db path="onework-e-rdf" schema="rdf">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>CONSTRUCT { ?work ?rel ?obj.
+                        ?creator ?crRel ?crObj .
+                        ?subj ?subRel ?subObj }
+      </form>
+      <criteria>?work a bf:Work</criteria>
+      <criteria>?work ?rel ?obj</criteria>
+      <criteria>OPTIONAL { ?work bf:creator ?creator . 
+                           ?creator ?crRel ?crObj }
+      </criteria>
+      <criteria>OPTIONAL { ?work bf:subject ?subj . 
+                           ?subj ?subRel ?subObj }
+      </criteria>
+      <index type="any">?work ?rel ?obj FILTER( str(?work) = %s )</index>
+    </db>
+    <!-- Expand all things a couple of levels. 
+      In all the data I have seen, two levels is enough. So we do three
+      Lnks to Works and Instances are explicitly excluded from this expansion,
+      and need to be handled separately. This is to avoid looping.
+    -->
+    
+    <db path="onework-f-rdf" schema="rdf">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>CONSTRUCT { ?work ?rel ?obj .
+                        ?obj ?rel1 ?obj1 .
+                        ?obj1 ?rel2 ?obj2 .
+                        ?obj2 ?rel3 ?obj3
+                        }
+      </form>
+      <criteria>?work a bf:Work</criteria>
+      
+      <criteria>?work ?rel ?obj </criteria>
+      <criteria>OPTIONAL { 
+          ?obj ?rel1 ?obj1  
+            MINUS { ?obj a bf:Work } 
+          } </criteria>
+      <criteria>OPTIONAL {
+          ?obj1 ?rel2 ?obj2 
+            MINUS { ?obj1 a bf:Work } 
+          } </criteria>
+      <criteria>OPTIONAL { 
+          ?obj2 ?rel3 ?obj3 
+            MINUS { ?obj2 a bf:Work } 
+          } </criteria>
+      <index type="any">?work ?rel ?obj FILTER( str(?work) = %s )</index>
+    </db>
+    <!-- Describe a work. Results may vary between back ends -->
+    <!-- On virtuoso, seems to return the same as onework-l-rdf above -->
+    <db path="onework-d-rdf" schema="rdf">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>DESCRIBE ?work 
+      </form>
+      <criteria>?work a bf:Work</criteria>
+      <criteria>?work ?rel ?obj</criteria>
+      <criteria>OPTIONAL { ?work bf:creator ?creator . 
+                           ?creator ?crRel ?crObj }
+      </criteria>
+      <criteria>OPTIONAL { ?work bf:subject ?subj . 
+                           ?subj ?subRel ?subObj }
+      </criteria>
       <index type="any">?work ?rel ?obj FILTER( str(?work) = %s )</index>
     </db>
 
