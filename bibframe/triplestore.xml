@@ -1,8 +1,8 @@
 <filters  xmlns="http://indexdata.com/metaproxy">
   <filter type="sparql">
       <!-- Which sparql server to use, our demo, or your local installation -->
-    <!--defaults uri="http://bibframe.indexdata.com/sparql/"/-->
-    <defaults uri="http://localhost:8890/sparql/"/>
+    <defaults uri="http://bibframe.indexdata.com/sparql/"/>
+    <!--defaults uri="http://localhost:8890/sparql/"/-->
 
     <!-- New structure: Any search in work returns just a list of records.
          Present will make another request to the backend to get the fields
@@ -22,105 +22,37 @@
           ?subject bf:label %v FILTER(contains(%v, %s))
       </index>
       <uri type="BF-L">
-	CONSTRUCT { ?work ?rel ?subj }
-	WHERE {
-	 ?work a bf:Work .
-	 ?work ?rel ?subj .
- 	 ?work ?rel ?obj FILTER( str(?work) = %s )
+        CONSTRUCT { ?work ?rel ?subj }
+         WHERE {
+         ?work a bf:Work .
+         ?work ?rel ?subj .
+         ?work ?rel ?obj FILTER( str(?work) = %s )
         }
       </uri>
-      <!-- TODO: Define a query to return detailed information for each
-      schema. For example
-      <present shema="BF-L" results="sparql-results" >
-        <query>
-          SELECT ?sub ?rel ?obj
-          WHERE ?work ?rel ?obj FILTER( str(?work) = %s )
-        </query>
-           - or possibly "FILTER ( ?work = <%u> )" if we define %u to
-           expand to the unquoted URI of the work.
-           - Even better, with %u we can say something like
-              SELECT %u ?rel ?obj
-      </present>
-      -->
-    </db>
-
-    <!-- Experiments while waiting for the present queries to be implemented -->
-    <db path="onework-l" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT ?work ?rel ?subj
-      </form>
-      <criteria>?work a bf:Work</criteria>
-      <criteria>?work ?rel ?obj</criteria>
-      <index type="any">?work ?rel ?obj FILTER( str(?work) = %s )</index>
-    </db>
-    <db path="onework-l-rdf" schema="rdf">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>CONSTRUCT { ?work ?rel ?subj }
-      </form>
-      <criteria>?work a bf:Work</criteria>
-      <criteria>?work ?rel ?subj</criteria>
-      <index type="any">?work ?rel ?obj FILTER( str(?work) = %s )</index>
-    </db>
-
-    <!-- This is the old "work" db that will not scale. May be removed -->
-    <db path="concatwork" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT
-              ?work
-              (sql:GROUP_DIGEST (?wtitle, ' ; ', 1000, 1)) AS ?title
-              (sql:GROUP_DIGEST (?creatorlabel, ' ; ', 1000, 1))AS ?creator
-              (sql:GROUP_DIGEST (?subjectlabel, ' ; ', 1000, 1))AS ?subject
-      </form>
-      <criteria>?work a bf:Work</criteria>
-
-      <criteria> OPTIONAL {
-          ?work bf:workTitle ?wt .
-          ?wt bf:titleValue ?wtitle }
-      </criteria>
-      <criteria> OPTIONAL {
-          ?work bf:creator ?creator .
-          ?creator bf:label ?creatorlabel }
-      </criteria>
-      <criteria>OPTIONAL {
-          ?work bf:subject ?subject .
-          ?subject bf:label ?subjectlabel }
-      </criteria>
-      <index type="4">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
-      <index type="1003">?creator bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="21">?subject bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="1016"> {
-            ?work ?op1 ?child .
-            ?child ?op2 %v FILTER(contains(STR(%v), %s))
+      <uri type="BF-F">
+        CONSTRUCT { ?work ?rel ?obj .
+                    ?obj ?rel1 ?obj1 .
+                    ?obj1 ?rel2 ?obj2 .
+                    ?obj2 ?rel3 ?obj3 }
+         WHERE {
+         ?work a bf:Work .
+         ?work ?rel ?obj .
+      OPTIONAL { 
+          ?obj ?rel1 ?obj1  
+            MINUS { ?obj a bf:Work } 
           }
-      </index>
-      <modifier>GROUP BY $work</modifier>
+      OPTIONAL {
+          ?obj1 ?rel2 ?obj2 
+            MINUS { ?obj1 a bf:Work } 
+          } 
+      OPTIONAL { 
+          ?obj2 ?rel3 ?obj3 
+            MINUS { ?obj2 a bf:Work } 
+          }
+         ?work ?rel ?obj FILTER( str(?work) = %s )
+        }
+      </uri>
     </db>
-
-    <db path="works" schema="rdf">  <!-- May be removed, will not scale -->
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>CONSTRUCT { 
-          ?work bf:title ?wtitle . 
-          ?work bf:instanceTitle ?title .
-          ?work bf:author ?creator . 
-          ?work bf:subject ?subjectlabel }
-      </form>
-      <criteria>?work a bf:Work</criteria>
-
-      <criteria>?work bf:workTitle ?wt</criteria>
-      <criteria>?wt bf:titleValue ?wtitle</criteria>
-      <index type="4">?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
-      <criteria>?work bf:creator ?creator</criteria>
-      <criteria>?creator bf:label ?creatorlabel</criteria>
-      <index type="1003">?creator bf:label %v FILTER(contains(%v, %s))</index>
-      <criteria>?work bf:subject ?subject</criteria>
-      <criteria>?subject bf:label ?subjectlabel</criteria>
-      <index type="21">?subject bf:label %v FILTER(contains(%v, %s))</index>
-    </db>
-
     <!-- Instance searches, need to be refined later -->
     <db path="instance" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
