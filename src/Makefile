@@ -13,8 +13,8 @@ MP_SO := metaproxy_filter_sparql.so
 
 O := filter_sparql.o sparql.o
 
-CXXFLAGS := -DVERSION=\"$(VERSION)\" $(MP_CFLAGS) -fPIC
-CFLAGS := -DVERSION=\"$(VERSION)\" $(MP_CFLAGS) -fPIC
+CXXFLAGS := -DVERSION=\"$(VERSION)\" $(MP_CFLAGS) -fPIC -g -Wall
+CFLAGS := -DVERSION=\"$(VERSION)\" $(MP_CFLAGS) -fPIC -g -Wall
 
 all: $(MP_SO)
 
