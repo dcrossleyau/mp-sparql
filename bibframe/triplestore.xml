@@ -59,7 +59,6 @@
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>SELECT ?instance ?title ?format</form>
       <criteria>?instance a bf:Instance</criteria>
-
       <criteria>?instance bf:title ?title</criteria>
       <index type="4">?instance bf:title %v FILTER(contains(%v, %s))</index>
       <criteria>?instance bf:format ?format</criteria>
@@ -68,6 +67,43 @@
 
     <!-- Simple databases -->
     <db path="place" schema="sparql-results">
+      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
+      <prefix>bf: http://bibframe.org/vocab/</prefix>
+      <form>SELECT DISTINCT ?place </form>
+      <criteria>?place a bf:Place</criteria>
+      <criteria>?place ?rel ?obj</criteria>
+      <index type="bf.place">?place bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="any">?place bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="1016">?place bf:label %v FILTER(contains(%v, %s))</index>
+      <uri type="BF-L">
+        CONSTRUCT { %u ?rel ?obj }
+         WHERE {
+           %u ?rel ?obj .
+         }
+      </uri>
+      <!-- Experimental, to get just the URIs out, in proper rdf. Probably not useful 
+      <uri type="BF-U">
+        CONSTRUCT { %u bf:uri %u }
+         WHERE {
+           %u bf:label ?lbl .
+         }
+      </uri>
+      -->
+      <uri type="BF-F">
+          <!-- I don't think we need more than one level for these simple 
+          databases -->
+        CONSTRUCT { %u ?rel ?obj . 
+                    ?obj ?rel1 ?obj1 .
+                    <!--  ?obj1 ?rel2 ?obj2 -->
+                  }
+         WHERE {
+           %u ?rel ?obj .
+           OPTIONAL { ?obj ?rel1 ?obj1 }
+           <!-- OPTIONAL { ?obj1 ?rel2 ?obj2 }   Seems not to be necessary -->
+         }
+      </uri>
+    </db>
+    <db path="place-old" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>SELECT DISTINCT  ?label ?id ?place ?relatedTo ?authorizedAccessPoint </form>
