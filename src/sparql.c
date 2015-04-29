@@ -58,6 +58,13 @@ int yaz_sparql_from_rpn_wrbuf(yaz_sparql_t s, WRBUF addinfo, WRBUF w,
     return yaz_sparql_from_rpn_stream(s, addinfo, wrbuf_vp_puts, w, q);
 }
 
+int yaz_sparql_from_uri_wrbuf(yaz_sparql_t s, WRBUF addinfo, WRBUF w,
+                              const char *uri, const char *schema)
+{
+    return yaz_sparql_from_uri_stream(s, addinfo, wrbuf_vp_puts, w, uri,
+                                      schema);
+}
+
 static Odr_int lookup_attr_numeric(Z_AttributeList *attributes, int type)
 {
     int j;
@@ -97,13 +104,95 @@ static const char *lookup_attr_string(Z_AttributeList *attributes, int type)
     return 0;
 }
 
+static int z_term(yaz_sparql_t s, WRBUF addinfo, WRBUF res, WRBUF vars,
+                  struct sparql_entry *e, const char *use_var,
+                  Z_Term *term, int indent, int *var_no)
+{
+    const char *cp;
+    for (cp = e->value; *cp; cp++)
+    {
+        if (strchr(" \t\r\n\f", *cp) && !use_var)
+        {
+            use_var = e->value;
+            if (strchr("$?", e->value[0]))
+            {
+                wrbuf_write(vars, e->value + 1, cp - e->value - 1);
+                wrbuf_puts(vars, " ");
+            }
+        }
+        if (*cp == '%')
+        {
+            switch (*++cp)
+            {
+            case 's':
+                wrbuf_puts(addinfo, "\"");
+                switch (term->which)
+                {
+                case Z_Term_general:
+                    wrbuf_json_write(addinfo,
+                                term->u.general->buf, term->u.general->len);
+                    break;
+                case Z_Term_numeric:
+                    wrbuf_printf(addinfo, ODR_INT_PRINTF, *term->u.numeric);
+                    break;
+                case Z_Term_characterString:
+                    wrbuf_json_puts(addinfo, term->u.characterString);
+                    break;
+                }
+                wrbuf_puts(addinfo, "\"");
+                break;
+            case 'u':
+                wrbuf_puts(addinfo, "<");
+                switch (term->which)
+                {
+                case Z_Term_general:
+                    wrbuf_json_write(addinfo,
+                                term->u.general->buf, term->u.general->len);
+                    break;
+                case Z_Term_numeric:
+                    wrbuf_printf(addinfo, ODR_INT_PRINTF, *term->u.numeric);
+                    break;
+                case Z_Term_characterString:
+                    wrbuf_json_puts(addinfo, term->u.characterString);
+                    break;
+                }
+                wrbuf_puts(addinfo, ">");
+                break;
+            case 'd':
+                switch (term->which)
+                {
+                case Z_Term_general:
+                    wrbuf_write(addinfo,
+                                term->u.general->buf, term->u.general->len);
+                    break;
+                case Z_Term_numeric:
+                    wrbuf_printf(addinfo, ODR_INT_PRINTF, *term->u.numeric);
+                    break;
+                case Z_Term_characterString:
+                    wrbuf_puts(addinfo, term->u.characterString);
+                    break;
+                }
+                break;
+            case 'v':
+                wrbuf_printf(addinfo, "?v%d", *var_no);
+                break;
+            case '%':
+                wrbuf_putc(addinfo, '%');
+                break;
+            }
+        }
+        else
+            wrbuf_putc(addinfo, *cp);
+    }
+    wrbuf_puts(res, wrbuf_cstr(addinfo));
+    return 0;
+}
+
 static int apt(yaz_sparql_t s, WRBUF addinfo, WRBUF res, WRBUF vars,
                Z_AttributesPlusTerm *q, int indent, int *var_no)
 {
-    Z_Term *term = q->term;
     Odr_int v = lookup_attr_numeric(q->attributes, 1);
     struct sparql_entry *e = 0;
-    const char *cp;
     const char *use_var = 0;
     int i;
 
@@ -151,65 +240,7 @@ static int apt(yaz_sparql_t s, WRBUF addinfo, WRBUF res, WRBUF vars,
     assert(e);
     wrbuf_rewind(addinfo);
 
-    for (cp = e->value; *cp; cp++)
-    {
-        if (strchr(" \t\r\n\f", *cp) && !use_var)
-        {
-            use_var = e->value;
-            if (strchr("$?", e->value[0]))
-            {
-                wrbuf_write(vars, e->value + 1, cp - e->value - 1);
-                wrbuf_puts(vars, " ");
-            }
-        }
-        if (*cp == '%')
-        {
-            switch (*++cp)
-            {
-            case 's':
-                wrbuf_puts(addinfo, "\"");
-                switch (term->which)
-                {
-                case Z_Term_general:
-                    wrbuf_json_write(addinfo,
-                                term->u.general->buf, term->u.general->len);
-                    break;
-                case Z_Term_numeric:
-                    wrbuf_printf(addinfo, ODR_INT_PRINTF, *term->u.numeric);
-                    break;
-                case Z_Term_characterString:
-                    wrbuf_json_puts(addinfo, term->u.characterString);
-                    break;
-                }
-                wrbuf_puts(addinfo, "\"");
-                break;
-            case 'd':
-                switch (term->which)
-                {
-                case Z_Term_general:
-                    wrbuf_write(addinfo,
-                                term->u.general->buf, term->u.general->len);
-                    break;
-                case Z_Term_numeric:
-                    wrbuf_printf(addinfo, ODR_INT_PRINTF, *term->u.numeric);
-                    break;
-                case Z_Term_characterString:
-                    wrbuf_puts(addinfo, term->u.characterString);
-                    break;
-                }
-                break;
-            case 'v':
-                wrbuf_printf(addinfo, "?v%d", *var_no);
-                break;
-            case '%':
-                wrbuf_putc(addinfo, '%');
-                break;
-            }
-        }
-        else
-            wrbuf_putc(addinfo, *cp);
-    }
-    wrbuf_puts(res, wrbuf_cstr(addinfo));
+    z_term(s, addinfo, res, vars, e, use_var, q->term, indent, var_no);
     (*var_no)++;
     return 0;
 }
@@ -269,17 +300,15 @@ static int rpn_structure(yaz_sparql_t s, WRBUF addinfo,
     return 0;
 }
 
-int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
-                               WRBUF addinfo,
-                               void (*pr)(const char *buf,
-                                          void *client_data),
-                               void *client_data,
-                               Z_RPNQuery *q)
+static int emit_prefixes(yaz_sparql_t s,
+                          WRBUF addinfo,
+                          void (*pr)(const char *buf,
+                                     void *client_data),
+                          void *client_data)
 {
     struct sparql_entry *e;
     yaz_tok_cfg_t cfg = yaz_tok_cfg_create();
-    int r = 0, errors = 0;
-
+    int errors = 0;
     for (e = s->conf; e; e = e->next)
     {
         if (!strcmp(e->pattern, "prefix"))
@@ -330,11 +359,88 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
         {
             ;
         }
+        else if (!strncmp(e->pattern, "uri", 3))
+        {
+            ;
+        }
         else
         {
             errors++;
         }
     }
+    yaz_tok_cfg_destroy(cfg);
+    return errors;
+}
+
+int yaz_sparql_lookup_schema(yaz_sparql_t s, const char *schema)
+{
+    struct sparql_entry *e;
+
+    for (e = s->conf; e; e = e->next)
+    {
+        if (!schema && !strcmp(e->pattern, "uri"))
+            break;
+        else if (schema && !strncmp(e->pattern, "uri.", 4))
+        {
+            if (!strcmp(e->pattern + 4, schema))
+                break;
+        }
+    }
+    return e ? 1 : 0;
+}
+
+int yaz_sparql_from_uri_stream(yaz_sparql_t s,
+                               WRBUF addinfo,
+                               void (*pr)(const char *buf, void *client_data),
+                               void *client_data,
+                               const char *uri, const char *schema)
+{
+    int r = 0, errors = emit_prefixes(s, addinfo, pr, client_data);
+    struct sparql_entry *e;
+
+    for (e = s->conf; e; e = e->next)
+    {
+        if (!schema && !strcmp(e->pattern, "uri"))
+            break;
+        else if (schema && !strncmp(e->pattern, "uri.", 4))
+        {
+            if (!strcmp(e->pattern + 4, schema))
+                break;
+        }
+    }
+    if (!e)
+        errors++;
+    if (!errors)
+    {
+        WRBUF res = wrbuf_alloc();
+        WRBUF vars = wrbuf_alloc();
+        int var_no = 0;
+        Z_Term term;
+
+        term.which = Z_Term_characterString;
+        term.u.characterString = (char *) uri;
+        r = z_term(s, addinfo, res, vars, e, 0, &term, 0, &var_no);
+        if (!r)
+        {
+            pr(wrbuf_cstr(res), client_data);
+            pr("\n", client_data);
+        }
+        wrbuf_destroy(res);
+        wrbuf_destroy(vars);
+    }
+    return errors ? -1 : r;
+}
+
+int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
+                               WRBUF addinfo,
+                               void (*pr)(const char *buf,
+                                          void *client_data),
+                               void *client_data,
+                               Z_RPNQuery *q)
+{
+    int r = 0, errors = emit_prefixes(s, addinfo, pr, client_data);
+    struct sparql_entry *e;
+
     for (e = s->conf; e; e = e->next)
     {
         if (!strcmp(e->pattern, "form"))
@@ -408,8 +514,6 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
             pr("\n", client_data);
         }
     }
-    yaz_tok_cfg_destroy(cfg);
-
     return errors ? -1 : r;
 }
 

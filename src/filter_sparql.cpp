@@ -93,12 +93,18 @@ namespace metaproxy_1 {
             Session(const SPARQL *);
             ~Session();
             void handle_z(Package &package, Z_APDU *apdu);
-            Z_APDU *run_sparql(mp::Package &package,
-                               Z_APDU *apdu_req,
-                               mp::odr &odr,
-                               const char *sparql_query,
-                               ConfPtr conf, FrontendSetPtr fset);
+            Z_APDU *search(mp::Package &package,
+                           Z_APDU *apdu_req,
+                           mp::odr &odr,
+                           const char *sparql_query,
+                           ConfPtr conf, FrontendSetPtr fset);
+            int invoke_sparql(mp::Package &package,
+                              const char *sparql_query,
+                              ConfPtr conf,
+                              WRBUF w);
+
             Z_Records *fetch(
+                Package &package,
                 FrontendSetPtr fset,
                 ODR odr, Odr_oid *preferredRecordSyntax,
                 Z_ElementSetNames *esn,
@@ -291,8 +297,7 @@ void yf::SPARQL::release_session(Package &package) const
     }
 }
 
-static bool get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos,
-                       xmlDoc **ndoc)
+static bool get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos, xmlDoc **ndoc)
 {
     xmlNode *ptr = xmlDocGetRootElement(doc);
     xmlNode *q0;
@@ -405,6 +410,7 @@ static bool get_result(xmlDoc *doc, Odr_int *sz, Odr_int pos,
 }
 
 Z_Records *yf::SPARQL::Session::fetch(
+    Package &package,
     FrontendSetPtr fset,
     ODR odr, Odr_oid *preferredRecordSyntax,
     Z_ElementSetNames *esn,
@@ -413,25 +419,30 @@ Z_Records *yf::SPARQL::Session::fetch(
 {
     Z_Records *rec = (Z_Records *) odr_malloc(odr, sizeof(Z_Records));
     std::list<Result>::iterator it = fset->results.begin();
-    if (esn && esn->which == Z_ElementSetNames_generic && esn->u.generic)
+    const char *schema = 0;
+    bool uri_lookup = false;
+    if (esn && esn->which == Z_ElementSetNames_generic)
+        schema = esn->u.generic;
+
+    for (; it != fset->results.end(); it++)
     {
-        for (; it != fset->results.end(); it++)
+        if (schema && !strcmp(esn->u.generic, it->conf->schema.c_str()))
+            break;
+        if (yaz_sparql_lookup_schema(it->conf->s, schema))
         {
-            yaz_log(YLOG_LOG, "checking xmldoc=%p schema=%s user-schema=%s",
-                    it->doc, it->conf->schema.c_str(), esn->u.generic);
-            if (!strcmp(esn->u.generic, it->conf->schema.c_str()))
-                break;
+            uri_lookup = true;
+            break;
         }
-        if (it == fset->results.end())
-        {
-            rec->which = Z_Records_NSD;
-            rec->u.nonSurrogateDiagnostic =
-                zget_DefaultDiagFormat(
-                    odr,
-                    YAZ_BIB1_SPECIFIED_ELEMENT_SET_NAME_NOT_VALID_FOR_SPECIFIED_,
-                    esn->u.generic);
-            return rec;
-        }
+    }
+    if (it == fset->results.end())
+    {
+        rec->which = Z_Records_NSD;
+        rec->u.nonSurrogateDiagnostic =
+            zget_DefaultDiagFormat(
+                odr,
+                YAZ_BIB1_SPECIFIED_ELEMENT_SET_NAME_NOT_VALID_FOR_SPECIFIED_,
+                schema);
+        return rec;
     }
     rec->which = Z_Records_DBOSD;
     rec->u.databaseOrSurDiagnostics = (Z_NamePlusRecordList *)
@@ -460,12 +471,72 @@ Z_Records *yf::SPARQL::Session::fetch(
             xmlFreeDoc(ndoc);
             break;
         }
-        xmlBufferPtr buf = xmlBufferCreate();
-        xmlNodeDump(buf, ndoc, ndoc_root, 0, 0);
-        npr->u.databaseRecord =
-            z_ext_record_xml(odr, (const char *) buf->content, buf->use);
+        if (uri_lookup)
+        {
+            std::string uri;
+            xmlNode *n = ndoc_root;
+            while (n)
+            {
+                if (n->type == XML_ELEMENT_NODE)
+                {
+                    if (!strcmp((const char *) n->name, "uri"))
+                    {
+                        uri = mp::xml::get_text(n->children);
+
+                    }
+                    n = n->children;
+                }
+                else
+                    n = n->next;
+            }
+            if (!uri.length())
+            {
+                rec->which = Z_Records_NSD;
+                rec->u.nonSurrogateDiagnostic =
+                    zget_DefaultDiagFormat(
+                        odr,
+                        YAZ_BIB1_SYSTEM_ERROR_IN_PRESENTING_RECORDS, 0);
+                xmlFreeDoc(ndoc);
+                return rec;
+            }
+            else
+            {
+                mp::wrbuf addinfo, query, w;
+                int error = yaz_sparql_from_uri_wrbuf(it->conf->s,
+                                                      addinfo, query,
+                                                      uri.c_str(), schema);
+                if (!error)
+                {
+                    yaz_log(YLOG_LOG, "query=%s", query.c_str());
+                    error = invoke_sparql(package, query.c_str(),
+                                          it->conf, w);
+                }
+                if (error)
+                {
+                    rec->which = Z_Records_NSD;
+                    rec->u.nonSurrogateDiagnostic =
+                        zget_DefaultDiagFormat(
+                            odr,
+                            error,
+                            addinfo.len() ? addinfo.c_str() : 0);
+                    xmlFreeDoc(ndoc);
+                    return rec;
+                }
+                npr->u.databaseRecord =
+                    z_ext_record_xml(odr, w.c_str(), w.len());
+            }
+        }
+        else
+        {
+            xmlBufferPtr buf = xmlBufferCreate();
+            xmlNodeDump(buf, ndoc, ndoc_root, 0, 0);
+            yaz_log(YLOG_LOG, "record %s %.*s", uri_lookup ? "uri" : "normal",
+                    (int) buf->use, (const char *) buf->content);
+            npr->u.databaseRecord =
+                z_ext_record_xml(odr, (const char *) buf->content, buf->use);
+            xmlBufferFree(buf);
+        }
         xmlFreeDoc(ndoc);
-        xmlBufferFree(buf);
     }
     rec->u.databaseOrSurDiagnostics->num_records = i;
     *number_returned = i;
@@ -476,14 +547,13 @@ Z_Records *yf::SPARQL::Session::fetch(
     return rec;
 }
 
-Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
-                                        Z_APDU *apdu_req,
-                                        mp::odr &odr,
-                                        const char *sparql_query,
-                                        ConfPtr conf, FrontendSetPtr fset)
+int yf::SPARQL::Session::invoke_sparql(mp::Package &package,
+                                       const char *sparql_query,
+                                       ConfPtr conf,
+                                       WRBUF w)
 {
-    Z_SearchRequest *req = apdu_req->u.searchRequest;
     Package http_package(package.session(), package.origin());
+    mp::odr odr;
 
     http_package.copy_filter(package);
     Z_GDU *gdu = z_get_HTTP_Request_uri(odr, conf->uri.c_str(), 0, 1);
@@ -510,32 +580,50 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
     http_package.move();
 
     Z_GDU *gdu_resp = http_package.response().get();
-    Z_APDU *apdu_res = 0;
+
     if (!gdu_resp || gdu_resp->which != Z_GDU_HTTP_Response)
     {
-        yaz_log(YLOG_LOG, "sparql: no HTTP response");
-        apdu_res = odr.create_searchResponse(apdu_req,
-                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
-                                             "no HTTP response from backend");
+        wrbuf_puts(w, "no HTTP response from backend");
+        return YAZ_BIB1_TEMPORARY_SYSTEM_ERROR;
     }
     else if (gdu_resp->u.HTTP_Response->code != 200)
     {
-        mp::wrbuf w;
-
         wrbuf_printf(w, "sparql: HTTP error %d from backend",
                      gdu_resp->u.HTTP_Response->code);
-        apdu_res = odr.create_searchResponse(apdu_req,
-                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
-                                             w.c_str());
+        return YAZ_BIB1_TEMPORARY_SYSTEM_ERROR;
+    }
+    Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
+    wrbuf_write(w, resp->content_buf, resp->content_len);
+    return 0;
+}
+
+Z_APDU *yf::SPARQL::Session::search(mp::Package &package,
+                                    Z_APDU *apdu_req,
+                                    mp::odr &odr,
+                                    const char *sparql_query,
+                                    ConfPtr conf, FrontendSetPtr fset)
+{
+    Z_SearchRequest *req = apdu_req->u.searchRequest;
+    Z_APDU *apdu_res = 0;
+    mp::wrbuf w;
+
+    int error = invoke_sparql(package, sparql_query, conf, w);
+    if (error)
+    {
+        apdu_res = odr.create_searchResponse(apdu_req, error,
+                                             w.len() ?
+                                             w.c_str() : 0);
     }
     else
     {
-        Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
-        xmlDocPtr doc = xmlParseMemory(resp->content_buf, resp->content_len);
+        xmlDocPtr doc = xmlParseMemory(w.c_str(), w.len());
         if (!doc)
-            apdu_res = odr.create_searchResponse(apdu_req,
-                                             YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
-                                             "invalid XML from backendbackend");
+        {
+            apdu_res = odr.create_searchResponse(
+                apdu_req,
+                YAZ_BIB1_TEMPORARY_SYSTEM_ERROR,
+                "invalid XML from backendbackend");
+        }
         else
         {
             Result result;
@@ -566,7 +654,7 @@ Z_APDU *yf::SPARQL::Session::run_sparql(mp::Package &package,
                     esn = req->mediumSetElementSetNames;
                 else
                     esn = req->smallSetElementSetNames;
-                records = fetch(fset,
+                records = fetch(package, fset,
                                 odr, req->preferredRecordSyntax, esn,
                                 1, number,
                                 error_code, addinfo,
@@ -680,8 +768,8 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
             for (; it != m_sparql->db_conf.end(); it++)
                 if (yaz_match_glob((*it)->db.c_str(), db.c_str()))
                 {
-                    WRBUF addinfo_wr = wrbuf_alloc();
-                    WRBUF sparql_wr = wrbuf_alloc();
+                    mp::wrbuf addinfo_wr;
+                    mp::wrbuf sparql_wr;
                     int error =
                         yaz_sparql_from_rpn_wrbuf((*it)->s,
                                                   addinfo_wr, sparql_wr,
@@ -690,19 +778,16 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
                     {
                         apdu_res = odr.create_searchResponse(
                             apdu_req, error,
-                            wrbuf_len(addinfo_wr) ?
-                            wrbuf_cstr(addinfo_wr) : 0);
+                            addinfo_wr.len() ? addinfo_wr.c_str() : 0);
                     }
                     else
                     {
-                        Z_APDU *apdu_1 = run_sparql(package, apdu_req, odr,
-                                                    wrbuf_cstr(sparql_wr), *it,
-                                                    fset);
+                        Z_APDU *apdu_1 = search(package, apdu_req, odr,
+                                                sparql_wr.c_str(), *it,
+                                                fset);
                         if (!apdu_res)
                             apdu_res = apdu_1;
                     }
-                    wrbuf_destroy(addinfo_wr);
-                    wrbuf_destroy(sparql_wr);
                 }
             if (apdu_res == 0)
             {
@@ -746,6 +831,7 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
             }
         }
         Z_Records *records = fetch(
+            package,
             fset_it->second,
             odr, req->preferredRecordSyntax, esn,
             *req->resultSetStartPoint, *req->numberOfRecordsRequested,
