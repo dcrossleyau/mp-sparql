@@ -43,6 +43,9 @@ YAZ_EXPORT
 int yaz_sparql_from_uri_wrbuf(yaz_sparql_t s, WRBUF addinfo, WRBUF w,
                               const char *uri, const char *schema);
 
+YAZ_EXPORT
+int yaz_sparql_lookup_schema(yaz_sparql_t s, const char *schema);
+
 YAZ_END_CDECL
 
 #endif

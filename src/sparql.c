@@ -372,6 +372,23 @@ static int emit_prefixes(yaz_sparql_t s,
     return errors;
 }
 
+int yaz_sparql_lookup_schema(yaz_sparql_t s, const char *schema)
+{
+    struct sparql_entry *e;
+
+    for (e = s->conf; e; e = e->next)
+    {
+        if (!schema && !strcmp(e->pattern, "uri"))
+            break;
+        else if (schema && !strncmp(e->pattern, "uri.", 4))
+        {
+            if (!strcmp(e->pattern + 4, schema))
+                break;
+        }
+    }
+    return e ? 1 : 0;
+}
+
 int yaz_sparql_from_uri_stream(yaz_sparql_t s,
                                WRBUF addinfo,
                                void (*pr)(const char *buf, void *client_data),

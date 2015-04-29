@@ -19,7 +19,16 @@
       <index type="bf.creator">?work bf:creator ?c .
           ?c bf:label %v FILTER(contains(%v, %s))</index>
       <index type="bf.subject">?work bf:subject ?subject .
-          ?subject bf:label %v FILTER(contains(%v, %s))</index>
+          ?subject bf:label %v FILTER(contains(%v, %s))
+      </index>
+      <uri type="BF-L">
+	CONSTRUCT { ?work ?rel ?subj }
+	WHERE {
+	 ?work a bf:Work .
+	 ?work ?rel ?subj .
+ 	 ?work ?rel ?obj FILTER( str(?work) = %s )
+        }
+      </uri>
       <!-- TODO: Define a query to return detailed information for each
       schema. For example
       <present shema="BF-L" results="sparql-results" >
