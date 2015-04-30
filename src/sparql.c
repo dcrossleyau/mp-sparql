@@ -359,6 +359,10 @@ static int emit_prefixes(yaz_sparql_t s,
         {
             ;
         }
+        else if (!strncmp(e->pattern, "present", 7))
+        {
+            ;
+        }
         else if (!strncmp(e->pattern, "uri", 3))
         {
             ;
@@ -378,6 +382,11 @@ struct sparql_entry *lookup_schema(yaz_sparql_t s, const char *schema)
 
     for (e = s->conf; e; e = e->next)
     {
+        if (!strncmp(e->pattern, "present.", 8))
+        {
+            if (!schema || !strcmp(e->pattern + 8, schema))
+                break;
+        }
         if (!strncmp(e->pattern, "uri.", 4))
         {
             if (!schema || !strcmp(e->pattern + 4, schema))

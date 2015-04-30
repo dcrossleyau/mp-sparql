@@ -151,12 +151,20 @@ static void tst1(void)
     yaz_sparql_add_pattern(s, "index.bf.isbn", "?inst bf:ISBN %s");
 
     yaz_sparql_add_pattern(s, "uri.full", "SELECT ?sub ?rel WHERE ?work = %u");
+    yaz_sparql_add_pattern(s, "present.brief", "SELECT %u");
 
     YAZ_CHECK(test_uri(s, "http://x/y", "full",
                        "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                        "PREFIX bf: <http://bibframe.org/vocab/>\n"
                        "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
                        "SELECT ?sub ?rel WHERE ?work = <http://x/y>\n"));
+
+
+    YAZ_CHECK(test_uri(s, "http://x/z", "brief",
+                       "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
+                       "PREFIX bf: <http://bibframe.org/vocab/>\n"
+                       "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
+                       "SELECT <http://x/z>\n"));
 
     YAZ_CHECK(test_query(
                   s, "@attr 1=bf.title computer",
