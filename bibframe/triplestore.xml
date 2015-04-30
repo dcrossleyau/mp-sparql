@@ -4,9 +4,9 @@
     <defaults uri="http://bibframe.indexdata.com/sparql/"/>
     <!--defaults uri="http://localhost:8890/sparql/"/-->
 
-    <!-- New structure: Any search in work returns just a list of records.
-         Present will make another request to the backend to get the fields
-         we want, depending on the schema. That part is not yet implemented -->
+    <!-- Any search in work returns just a list of records.
+         Present will make another request for each record to get the level
+         of details we want, depending on the schema.  -->
     <db path="work" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
@@ -37,19 +37,60 @@
          WHERE {
          ?work a bf:Work .
          ?work ?rel ?obj .
-      OPTIONAL { 
+        OPTIONAL { 
           ?obj ?rel1 ?obj1  
             MINUS { ?obj a bf:Work } 
           }
-      OPTIONAL {
+        OPTIONAL {
           ?obj1 ?rel2 ?obj2 
             MINUS { ?obj1 a bf:Work } 
           } 
-      OPTIONAL { 
+        OPTIONAL { 
           ?obj2 ?rel3 ?obj3 
             MINUS { ?obj2 a bf:Work } 
           }
          ?work ?rel ?obj FILTER( str(?work) = %s )
+        }
+      </uri>
+      <uri type="BF-FI">  <!-- full, with instances. Experimental! -->
+        CONSTRUCT { %u ?rel ?obj .
+                    ?obj ?rel1 ?obj1 .
+                    ?obj1 ?rel2 ?obj2 .
+                    ?obj2 ?rel3 ?obj3 .
+                    ?inst ?irel1 ?iobj1 .
+                    ?iobj1 ?irel2 ?iobj2 .
+                    ?iobj2 ?irel3 ?iobj3 }
+         WHERE {
+          %u a bf:Work .
+          %u ?rel ?obj .
+          OPTIONAL { 
+              ?obj ?rel1 ?obj1  
+              MINUS { ?obj a bf:Work } 
+              MINUS { ?obj a bf:Instance }
+          }
+          OPTIONAL {
+              ?obj1 ?rel2 ?obj2 
+              MINUS { ?obj1 a bf:Work } 
+              MINUS { ?obj1 a bf:Instance }
+          } 
+          OPTIONAL { 
+              ?obj2 ?rel3 ?obj3 
+              MINUS { ?obj2 a bf:Work } 
+              MINUS { ?obj2 a bf:Instance }
+          }
+          OPTIONAL { <!-- note, this is not in the final construct
+          the linking triplet will get included like any others -->
+            ?inst bf:instanceOf %u
+          } 
+          OPTIONAL {
+            ?inst ?irel1 ?iobj1
+          }
+          OPTIONAL {
+            ?iobj1 ?irel2 ?iobj2
+          }
+          OPTIONAL {
+            ?iobj2 ?irel3 ?iobj3
+          }
         }
       </uri>
     </db>
