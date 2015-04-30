@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
+#include <boost/algorithm/string.hpp>
 #include "sparql.h"
 
 #include <yaz/zgdu.h>
@@ -179,21 +180,29 @@ void yf::SPARQL::configure(const xmlNode *xmlnode, bool test_only,
                     conf->schema = mp::xml::get_text(attr->children);
                 else if (!strcmp((const char *) attr->name, "include"))
                 {
-                    std::string name = mp::xml::get_text(attr->children);
-                    std::list<ConfPtr>::const_iterator it = db_conf.begin();
-                    while (1)
-                        if (it == db_conf.end())
-                        {
-                            throw mp::filter::FilterException(
-                                "include db not found: " + name);
-                        }
-                        else if (name.compare((*it)->db) == 0)
-                        {
-                            yaz_sparql_include(s, (*it)->s);
-                            break;
-                        }
-                        else
-                            it++;
+                    std::vector<std::string> dbs;
+                    std::string db = mp::xml::get_text(attr->children);
+                    boost::split(dbs, db, boost::is_any_of(" \t"));
+                    size_t i;
+                    for (i = 0; i < dbs.size(); i++)
+                    {
+                        if (dbs[i].length() == 0)
+                            continue;
+                        std::list<ConfPtr>::const_iterator it = db_conf.begin();
+                        while (1)
+                            if (it == db_conf.end())
+                            {
+                                throw mp::filter::FilterException(
+                                    "include db not found: " + dbs[i]);
+                            }
+                            else if (dbs[i].compare((*it)->db) == 0)
+                            {
+                                yaz_sparql_include(s, (*it)->s);
+                                break;
+                            }
+                            else
+                                it++;
+                    }
                 }
                 else
                     throw mp::filter::FilterException(
