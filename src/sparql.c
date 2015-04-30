@@ -37,6 +37,13 @@ void yaz_sparql_destroy(yaz_sparql_t s)
         nmem_destroy(s->nmem);
 }
 
+void yaz_sparql_include(yaz_sparql_t s, yaz_sparql_t u)
+{
+    struct sparql_entry *e = u->conf;
+    for (; e; e = e->next)
+        yaz_sparql_add_pattern(s, e->pattern, e->value);
+}
+
 int yaz_sparql_add_pattern(yaz_sparql_t s, const char *pattern,
                            const char *value)
 {

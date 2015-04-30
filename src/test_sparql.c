@@ -372,6 +372,7 @@ static void tst1(void)
 static void tst2(void)
 {
     yaz_sparql_t s = yaz_sparql_create();
+    yaz_sparql_t s2 = yaz_sparql_create();
 
     yaz_sparql_add_pattern(s, "prefix",
                            "rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns");
@@ -445,10 +446,14 @@ static void tst2(void)
                   "  OPTIONAL { ?inst bf:heldBy ?lib } .\n"
                   "  ?work bf:creator/bf:label ?v0 "
                   "FILTER(contains(?v0, \"london\"))\n"
+
+
                   "}\n"));
 
+    yaz_sparql_include(s2, s);
+
     YAZ_CHECK(test_query(
-                  s, "@or @and @attr 1=bf.creator a @attr 1=bf.title b @attr 1=bf.title c",
+                  s2, "@or @and @attr 1=bf.creator a @attr 1=bf.title b @attr 1=bf.title c",
                   "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns>\n"
                   "PREFIX bf: <http://bibframe.org/vocab/>\n"
                   "PREFIX gs: <http://gs.com/panorama/domain-model>\n"
@@ -473,6 +478,7 @@ static void tst2(void)
                   "}\n"
                   ));
 
+    yaz_sparql_destroy(s2);
     yaz_sparql_destroy(s);
 }
 

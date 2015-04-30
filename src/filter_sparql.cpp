@@ -177,6 +177,24 @@ void yf::SPARQL::configure(const xmlNode *xmlnode, bool test_only,
                     conf->uri = mp::xml::get_text(attr->children);
                 else if (!strcmp((const char *) attr->name, "schema"))
                     conf->schema = mp::xml::get_text(attr->children);
+                else if (!strcmp((const char *) attr->name, "include"))
+                {
+                    std::string name = mp::xml::get_text(attr->children);
+                    std::list<ConfPtr>::const_iterator it = db_conf.begin();
+                    while (1)
+                        if (it == db_conf.end())
+                        {
+                            throw mp::filter::FilterException(
+                                "include db not found: " + name);
+                        }
+                        else if (name.compare((*it)->db) == 0)
+                        {
+                            yaz_sparql_include(s, (*it)->s);
+                            break;
+                        }
+                        else
+                            it++;
+                }
                 else
                     throw mp::filter::FilterException(
                         "Bad attribute " + std::string((const char *)
@@ -766,7 +784,8 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
             fset->db = db;
             it = m_sparql->db_conf.begin();
             for (; it != m_sparql->db_conf.end(); it++)
-                if (yaz_match_glob((*it)->db.c_str(), db.c_str()))
+                if ((*it)->schema.length() > 0
+                    && yaz_match_glob((*it)->db.c_str(), db.c_str()))
                 {
                     mp::wrbuf addinfo_wr;
                     mp::wrbuf sparql_wr;
