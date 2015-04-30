@@ -1,3 +1,39 @@
+<?xml version="1.0"?>
+<!DOCTYPE html [
+<!-- Entity definitions for commonly used idioms -->
+<!-- TODO - Now it accepts these, but will not expand them in place! -->
+<!-- Seems we can not use many special characters in these: <> % etc -->
+  <!ENTITY workfull "FOOBAR">
+  <!ENTITY workfullX "
+          OPTIONAL {
+              ?wobj ?wrel1 ?wobj1
+              MINUS { ?wobj a bf:Work }
+              MINUS { ?wobj a bf:Instance }
+          }
+          OPTIONAL {
+              ?wobj1 ?wrel2 ?wobj2
+              MINUS { ?wobj1 a bf:Work }
+              MINUS { ?wobj1 a bf:Instance }
+          }
+          OPTIONAL {
+              ?wobj2 ?wrel3 ?wobj3
+              MINUS { ?wobj2 a bf:Work }
+              MINUS { ?wobj2 a bf:Instance }
+          }
+  ">
+  <!ENTITY instfull "
+          OPTIONAL {
+            ?inst ?irel1 ?iobj1
+          }
+          OPTIONAL {
+            ?iobj1 ?irel2 ?iobj2
+          }
+          OPTIONAL {
+            ?iobj2 ?irel3 ?iobj3
+          }
+  ">
+]>
+
 <filters  xmlns="http://indexdata.com/metaproxy">
   <filter type="sparql">
       <!-- Which sparql server to use, our demo, or your local installation -->
@@ -21,15 +57,15 @@
       <index type="bf.subject">?work bf:subject ?subject .
           ?subject bf:label %v FILTER(contains(%v, %s))
       </index>
-      <uri type="BF-L">
+      <present type="BF-L">
         CONSTRUCT { ?work ?rel ?subj }
          WHERE {
          ?work a bf:Work .
          ?work ?rel ?subj .
          ?work ?rel ?obj FILTER( str(?work) = %s )
         }
-      </uri>
-      <uri type="BF-F">
+      </present>
+      <present type="BF-F">
         CONSTRUCT { ?work ?rel ?obj .
                     ?obj ?rel1 ?obj1 .
                     ?obj1 ?rel2 ?obj2 .
@@ -51,37 +87,38 @@
           }
          ?work ?rel ?obj FILTER( str(?work) = %s )
         }
-      </uri>
-      <uri type="BF-FI">  <!-- full, with instances. Experimental! -->
-        CONSTRUCT { %u ?rel ?obj .
-                    ?obj ?rel1 ?obj1 .
-                    ?obj1 ?rel2 ?obj2 .
-                    ?obj2 ?rel3 ?obj3 .
+      </present>
+      <present type="BF-FI">  <!-- full, with instances. Experimental! -->
+        CONSTRUCT { %u ?rel ?wobj1 .
+                    ?wobj1 ?wrel1 ?wobj2 .
+                    ?wobj2 ?wrel2 ?wobj3 .
                     ?inst ?irel1 ?iobj1 .
                     ?iobj1 ?irel2 ?iobj2 .
                     ?iobj2 ?irel3 ?iobj3 }
          WHERE {
           %u a bf:Work .
-          %u ?rel ?obj .
-          OPTIONAL { 
-              ?obj ?rel1 ?obj1  
-              MINUS { ?obj a bf:Work } 
-              MINUS { ?obj a bf:Instance }
-          }
-          OPTIONAL {
-              ?obj1 ?rel2 ?obj2 
-              MINUS { ?obj1 a bf:Work } 
-              MINUS { ?obj1 a bf:Instance }
-          } 
-          OPTIONAL { 
-              ?obj2 ?rel3 ?obj3 
-              MINUS { ?obj2 a bf:Work } 
-              MINUS { ?obj2 a bf:Instance }
-          }
+          %u ?rel ?wobj1 .
           OPTIONAL { <!-- note, this is not in the final construct
           the linking triplet will get included like any others -->
             ?inst bf:instanceOf %u
           } 
+          &workfull; <!-- This does not seem to get expanded!! -->
+          OPTIONAL {
+              ?wobj ?wrel1 ?wobj1
+              MINUS { ?wobj a bf:Work }
+              MINUS { ?wobj a bf:Instance }
+          }
+          OPTIONAL {
+              ?wobj1 ?wrel2 ?wobj2
+              MINUS { ?wobj1 a bf:Work }
+              MINUS { ?wobj1 a bf:Instance }
+          }
+          OPTIONAL {
+              ?wobj2 ?wrel3 ?wobj3
+              MINUS { ?wobj2 a bf:Work }
+              MINUS { ?wobj2 a bf:Instance }
+          }
+          <!--&instfull; -->
           OPTIONAL {
             ?inst ?irel1 ?iobj1
           }
@@ -91,10 +128,11 @@
           OPTIONAL {
             ?iobj2 ?irel3 ?iobj3
           }
+
         }
-      </uri>
+      </present>
     </db>
-    <!-- Instance searches, need to be refined later -->
+    <!-- Instance searches, need to be refined later. TODO -->
     <db path="instance" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
@@ -106,22 +144,30 @@
       <index type="1013">?instance bf:format %s</index>
     </db>
 
-    <!-- Simple databases -->
-    <db path="place" schema="sparql-results">
+    <!-- Small databases -->
+   
+    <!-- "small" contains all the things common to all small databases -->
+    <!-- It is only to be used as an include, it is not searchable, since -->
+    <!-- it has no schema atribute -->
+    <!-- It is divided into "smallindex", "smallbody", and a "small" that includes
+    both, so that title searches can include the body, but have different indexes -->
+    
+    <db path="smallindex">
+      <index type="any">?thing bf:label %v FILTER(contains(%v, %s))</index>
+      <index type="1016">?thing bf:label %v FILTER(contains(%v, %s))</index>
+    </db>
+
+    <db path="smallbody">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT ?place </form>
-      <criteria>?place a bf:Place</criteria>
-      <criteria>?place ?rel ?obj</criteria>
-      <index type="bf.place">?place bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?place bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="1016">?place bf:label %v FILTER(contains(%v, %s))</index>
-      <uri type="BF-L">
+      <form>SELECT DISTINCT ?thing </form>
+      <criteria>?thing ?rel ?obj</criteria>
+      <present type="BF-L">
         CONSTRUCT { %u ?rel ?obj }
          WHERE {
            %u ?rel ?obj .
          }
-      </uri>
+      </present>
       <!-- Experimental, to get just the URIs out, in proper rdf. Probably not useful 
       <uri type="BF-U">
         CONSTRUCT { %u bf:uri %u }
@@ -130,131 +176,69 @@
          }
       </uri>
       -->
-      <uri type="BF-F">
+      <present type="BF-F">
           <!-- I don't think we need more than one level for these simple 
           databases -->
         CONSTRUCT { %u ?rel ?obj . 
                     ?obj ?rel1 ?obj1 .
-                    <!--  ?obj1 ?rel2 ?obj2 -->
                   }
          WHERE {
            %u ?rel ?obj .
            OPTIONAL { ?obj ?rel1 ?obj1 }
-           <!-- OPTIONAL { ?obj1 ?rel2 ?obj2 }   Seems not to be necessary -->
          }
-      </uri>
+      </present>
     </db>
-    <db path="place-old" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT  ?label ?id ?place ?relatedTo ?authorizedAccessPoint </form>
-      <criteria>?place a bf:Place</criteria>
-      <criteria>?place bf:label ?label</criteria>
-      <criteria>OPTIONAL { ?place bf:identifier ?id}</criteria>
-      <criteria>OPTIONAL { ?place bf:relatedTo ?relatedTo}</criteria>
-      <criteria>OPTIONAL { ?place bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
-      <index type="bf.place">?place bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?place bf:label %v FILTER(contains(%v, %s))</index>
+    <db path="small" include="smallindex smallbody"/>
+    
+    <db path="place" schema="sparql-results" include="small" >
+      <criteria>?thing a bf:Place</criteria>
+      <index type="bf.place">?thing bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="person" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT  ?label ?id ?person ?relatedTo ?authorizedAccessPoint </form>
-      <criteria>?person a bf:Person</criteria>
-      <criteria>?person bf:label ?label</criteria>
-      <criteria>OPTIONAL { ?person bf:identifier ?id}</criteria>
-      <criteria>OPTIONAL { ?person bf:relatedTo ?relatedTo}</criteria>
-      <criteria>OPTIONAL { ?person bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
-      <index type="bf.person">?person bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?person bf:label %v FILTER(contains(%v, %s))</index>
+    <db path="person" schema="sparql-results" include="small" >
+      <criteria>?thing a bf:Person</criteria>
+      <index type="bf.person">?thing bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="meeting" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT  ?label ?id ?meeting ?relatedTo ?authorizedAccessPoint </form>
-      <criteria>?meeting a bf:Meeting</criteria>
-      <criteria>?meeting bf:label ?label</criteria>
-      <criteria>OPTIONAL { ?meeting bf:identifier ?id}</criteria>
-      <criteria>OPTIONAL { ?meeting bf:relatedTo ?relatedTo}</criteria>
-      <criteria>OPTIONAL { ?meeting bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
-      <index type="bf.meeting">?meeting bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?meeting bf:label %v FILTER(contains(%v, %s))</index>
+    <db path="meeting" schema="sparql-results" include="small" >
+      <criteria>?thing a bf:Meeting</criteria>
+      <index type="bf.meeting">?thing bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="agent" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT  ?label ?id ?agent ?relatedTo ?authorizedAccessPoint </form>
-      <criteria>?agent a bf:Agent</criteria>
-      <criteria>?agent bf:label ?label</criteria>
-      <criteria>OPTIONAL { ?agent bf:identifier ?id}</criteria>
-      <criteria>OPTIONAL { ?agent bf:relatedTo ?relatedTo}</criteria>
-      <criteria>OPTIONAL { ?agent bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
-      <index type="bf.agent">?agent bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?agent bf:label %v FILTER(contains(%v, %s))</index>
+    <db path="agent" schema="sparql-results" include="small" >
+      <criteria>?thing a bf:Agent</criteria>
+      <index type="bf.agent">?thing bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="event" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT  ?label ?id ?event ?relatedTo ?authorizedAccessPoint </form>
-      <criteria>?event a bf:Event</criteria>
-      <criteria>?event bf:label ?label</criteria>
-      <criteria>OPTIONAL { ?event bf:identifier ?id}</criteria>
-      <criteria>OPTIONAL { ?event bf:relatedTo ?relatedTo}</criteria>
-      <criteria>OPTIONAL { ?event bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
-      <index type="bf.event">?event bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?event bf:label %v FILTER(contains(%v, %s))</index>
+    <db path="event" schema="sparql-results" include="small" >
+      <criteria>?thing a bf:Event</criteria>
+      <index type="bf.event">?thing bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="organization" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT  ?label ?id ?organization ?relatedTo ?authorizedAccessPoint </form>
-      <criteria>?organization a bf:Organization</criteria>
-      <criteria>?organization bf:label ?label</criteria>
-      <criteria>OPTIONAL { ?organization bf:identifier ?id}</criteria>
-      <criteria>OPTIONAL { ?organization bf:relatedTo ?relatedTo}</criteria>
-      <criteria>OPTIONAL { ?organization bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
-      <index type="bf.organization">?organization bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?organization bf:label %v FILTER(contains(%v, %s))</index>
+    <db path="organization" schema="sparql-results" include="small" >
+      <criteria>?thing a bf:Organization</criteria>
+      <index type="bf.organization">?thing bf:label %v FILTER(contains(%v, %s))</index>
     </db>
-    <db path="topic" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-      <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT  ?label ?id ?topic ?relatedTo ?authorizedAccessPoint </form>
-      <criteria>?topic a bf:Topic</criteria>
-      <criteria>?topic bf:label ?label</criteria>
-      <criteria>OPTIONAL { ?topic bf:identifier ?id}</criteria>
-      <criteria>OPTIONAL { ?topic bf:relatedTo ?relatedTo}</criteria>
-      <criteria>OPTIONAL { ?topic bf:authorizedAccessPoint ?authorizedAccessPoint}</criteria>
-      <index type="bf.topic">?topic bf:label %v FILTER(contains(%v, %s))</index>
-      <index type="any">?topic bf:label %v FILTER(contains(%v, %s))</index>
+    <db path="topic" schema="sparql-results" include="small" >
+      <criteria>?thing a bf:Topic</criteria>
+      <index type="bf.topic">?thing bf:label %v FILTER(contains(%v, %s))</index>
     </db>
 
-    <!-- Title search, probably not needed. Will need to be rewritten to the same
-    system as the work search above, with separate present query -->
-    <db path="title" schema="sparql-results">
-        <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-        <prefix>bf: http://bibframe.org/vocab/</prefix>
-        <form>SELECT DISTINCT ?title ?titleValue 
-            ?formDesignation ?partNumber ?partTitle ?subtitle 
-            ?titleAttribute ?titleQualifier ?titleSource 
-            ?titleType ?titleVariationDate</form>
-        <criteria>?title a bf:Title</criteria>
-        <criteria>OPTIONAL { ?title bf:titleValue ?titleValue}</criteria>
-        <criteria>OPTIONAL { ?title bf:formDesignation ?formDesignation}</criteria>
-        <criteria>OPTIONAL { ?title bf:partNumber ?partNumber}</criteria>
-        <criteria>OPTIONAL { ?title bf:partTitle ?partTitle}</criteria>
-        <criteria>OPTIONAL { ?title bf:subtitle ?subtitle}</criteria>
-        <criteria>OPTIONAL { ?title bf:titleAttribute ?titleAttribute}</criteria>
-        <criteria>OPTIONAL { ?title bf:titleQualifier ?titleQualifier}</criteria>
-        <criteria>OPTIONAL { ?title bf:titleSource ?titleSource}</criteria>
-        <criteria>OPTIONAL { ?title bf:titleType ?titleType}</criteria>
-        <criteria>OPTIONAL { ?title bf:titleVariationDate ?titleVariationDate}</criteria>
-        <index type="bf.title">?title bf:titleValue %v FILTER(contains(%v, %s))</index>
-        <index type="bf.subtitle">?title bf:subtitle %v FILTER(contains(%v, %s))</index>
-        <index type="bf.parttitle">?title bf:partTitle %v FILTER(contains(%v, %s))</index>
-        <index type="any">?title ?rel  %v FILTER(contains(str(%v), %s))</index>
+    <!-- Title search, probably not needed. -->
+    <db path="title" schema="sparql-results" include="smallbody" >
+      <criteria>?thing a bf:Title</criteria>
+      <index type="any">
+           { ?thing bf:titleValue %v FILTER(contains(%v, %s)) } UNION
+           { ?thing bf:subtitle %v FILTER(contains(%v, %s)) } UNION
+           { ?thing bf:partTitle %v FILTER(contains(%v, %s)) } 
+      </index>
+      <index type="1016">
+           { ?thing bf:titleValue %v FILTER(contains(%v, %s)) } UNION
+           { ?thing bf:subtitle %v FILTER(contains(%v, %s)) } UNION
+           { ?thing bf:partTitle %v FILTER(contains(%v, %s)) } 
+      </index>
+      <index type="bf.title">?thing bf:titleValue %v FILTER(contains(%v, %s))</index>
+      <index type="bf.subtitle">?thing bf:subtitle %v FILTER(contains(%v, %s))</index>
+      <index type="bf.parttitle">?thing bf:partTitle %v FILTER(contains(%v, %s))</index>
     </db>
+
     <!-- A hack to be able to look at any triplet in the base -->
+    <!-- TODO - Switch to the new system, probably using "small" -->
     <db path="node" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
@@ -262,6 +246,7 @@
       <index type="any">?node ?rel ?obj FILTER( str(?node) = %s )</index>
     </db>
     <!-- A way to see which triplets refers to a given uri. -->
+    <!-- TODO - Switch to the new system, probably using "small" -->
     <db path="ref" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
