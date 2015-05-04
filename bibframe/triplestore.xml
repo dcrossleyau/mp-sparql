@@ -3,7 +3,7 @@
 <!-- Entity definitions for commonly used idioms -->
 <!-- TODO - Now it accepts these, but will not expand them in place! -->
 <!-- Seems we can not use many special characters in these: <> % etc -->
-  <!ENTITY workfull "FOOBAR">
+  <!ENTITY workfull "FOOBAR" >
   <!ENTITY workfullX "
           OPTIONAL {
               ?wobj ?wrel1 ?wobj1
@@ -46,17 +46,63 @@
     <db path="work" schema="sparql-results">
       <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
-      <form>SELECT DISTINCT ?work
-      </form>
+      <form>SELECT DISTINCT ?work </form>
       <criteria>?work a bf:Work</criteria>
-      <!-- TODO: Many more indexes like the ones below-->
-      <index type="bf.title">?work bf:workTitle ?wt .
-          ?wt bf:titleValue %v FILTER(contains(%v, %s))</index>
+
+      <!-- bf.uri is a simple way to get to a work -->
+      <index type="bf.uri"> ?work a bf:Work FILTER( ?work  = %u ) </index>
+
+      <!-- Title indexes, directly via work.workTitle -->
+      <index type="bf.title">
+          ?work bf:workTitle ?wt .
+          ?wt bf:titleValue %v FILTER(contains(%v, %s))
+      </index>
+
+      <index type="bf.subtitle">?work bf:workTitle ?wt .
+          ?wt bf:subtitle %v FILTER(contains(%v, %s))
+      </index>
+
+      <index type="bf.parttitle">
+          ?work bf:workTitle ?wt .
+          ?wt bf:partTitle %v FILTER(contains(%v, %s))
+      </index>
+
+      <!-- work.titlevariation - this could also have sub- and partTitles -->
+      <index type="bf.titlevariation">
+          ?work bf:titleVariation ?tv .
+          ?tv bf:titleValue %v FILTER(contains(%v, %s))
+      </index>
+
+      <!-- Instance titles -->
+      <index type="bf.instancetitle">
+          ?inst bf:instanceOf ?work .
+          ?inst bf:instanceTitle ?it .
+          ?it bf:titleValue %v FILTER(contains(%v, %s))
+      </index>
+
+      <!-- Combined title index. There are so many ways titles can be expresses
+      in Bibframe, this seems to cover most of what we have seen -->
+      <index type="bf.anytitle">
+          { ?work bf:workTitle ?wt .
+              { ?wt bf:titleValue %v FILTER(contains(%v, %s)) } UNION
+              { ?wt bf:subtitle %v FILTER(contains(%v, %s)) } UNION
+              { ?wt bf:partTitle %v FILTER(contains(%v, %s)) }
+          } UNION {
+              ?work bf:titleVariation ?tv .
+              ?tv bf:titleValue %v FILTER(contains(%v, %s)) 
+          } UNION {
+              ?inst bf:instanceOf ?work .
+              ?inst bf:instanceTitle ?it .
+              ?it bf:titleValue %v FILTER(contains(%v, %s))
+          }
+      </index>
+
       <index type="bf.creator">?work bf:creator ?c .
           ?c bf:label %v FILTER(contains(%v, %s))</index>
       <index type="bf.subject">?work bf:subject ?subject .
           ?subject bf:label %v FILTER(contains(%v, %s))
       </index>
+      
       <present type="BF-L">
         CONSTRUCT { ?work ?rel ?subj }
          WHERE {
