@@ -97,12 +97,23 @@
           }
       </index>
 
-      <index type="bf.creator">?work bf:creator ?c .
-          ?c bf:label %v FILTER(contains(%v, %s))</index>
+      <!-- Author indexes -->
+      <index type="bf.creator">
+          ?work bf:creator ?c .
+          ?c bf:label %v FILTER(contains(%v, %s))
+      </index>
+
+      <index type="bf.contributor">
+          ?work bf:contributor ?c .
+          ?c bf:label %v FILTER(contains(%v, %s))
+          </index>
+
+      <!-- Subjects -->
       <index type="bf.subject">?work bf:subject ?subject .
           ?subject bf:label %v FILTER(contains(%v, %s))
       </index>
-      
+
+      <!-- Present formats. BF-L is just the links -->
       <present type="BF-L">
         CONSTRUCT { ?work ?rel ?subj }
          WHERE {
@@ -111,7 +122,9 @@
          ?work ?rel ?obj FILTER( str(?work) = %s )
         }
       </present>
-      <present type="BF-F">
+
+      <!-- BF-F expands all links, except to instances -->
+      <present type="BF-F"> 
         CONSTRUCT { ?work ?rel ?obj .
                     ?obj ?rel1 ?obj1 .
                     ?obj1 ?rel2 ?obj2 .
@@ -134,7 +147,9 @@
          ?work ?rel ?obj FILTER( str(?work) = %s )
         }
       </present>
-      <present type="BF-FI">  <!-- full, with instances. Experimental! -->
+
+      <!-- full, with instances. Experimental! -->
+      <present type="BF-FI">  
         CONSTRUCT { %u ?rel ?wobj1 .
                     ?wobj1 ?wrel1 ?wobj2 .
                     ?wobj2 ?wrel2 ?wobj3 .
@@ -148,7 +163,7 @@
           the linking triplet will get included like any others -->
             ?inst bf:instanceOf %u
           } 
-          &workfull; <!-- This does not seem to get expanded!! -->
+          &workfull; <!-- This does not seem to get expanded!! TODO -->
           OPTIONAL {
               ?wobj ?wrel1 ?wobj1
               MINUS { ?wobj a bf:Work }
