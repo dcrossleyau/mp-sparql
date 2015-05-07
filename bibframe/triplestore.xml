@@ -129,7 +129,17 @@
       <index type="bf.contributor">
           ?work bf:contributor ?c .
           ?c bf:label %v FILTER(contains(%v, %s))
-          </index>
+      </index>
+
+      <index type="bf.anyauthor">
+          {
+            ?work bf:creator ?c .
+            ?c bf:label %v FILTER(contains(%v, %s))
+          } UNION {
+            ?work bf:contributor ?c .
+            ?c bf:label %v FILTER(contains(%v, %s))
+          }
+      </index>
 
       <!-- Subjects -->
       <index type="bf.subject">
@@ -247,16 +257,103 @@
         <!-- Title indexes -->
         <!-- These are messy, there are so many ways to get to a title -->
 
-        <!-- Main title. Looks logical, but in practice we have seen only a very
-        small number of these -->
+        <!-- Main title. Looks logical. Many instances seem to have a title -->
         <index type="bf.title">
             ?inst bf:title %v FILTER(contains(%v, %s))
         </index>
 
-        <!-- worktitle seems to be the most common way to store the title of a work -->
+        <!-- instancetitle is also pretty common -->
         <index type="bf.instancetitle">
             ?inst bf:instanceTitle ?it .
             ?it bf:titleValue %v FILTER(contains(%v, %s))
+        </index>
+        
+        <index type="bf.titlestatement">
+            ?inst bf:titleStatement %v FILTER(contains(%v, %s))
+        </index>
+                
+        <!-- Combining the two above, since users are not likely to know how
+        a given title has been indexed -->
+        <index type="bf.maintitle">
+            { 
+                ?inst bf:instanceTitle ?it .
+                ?it bf:titleValue %v FILTER(contains(%v, %s))
+            } UNION {
+                ?inst bf:title %v FILTER(contains(%v, %s))
+            }
+        </index>
+
+
+        <!-- the instancetitle can also contain a subtitle and a parttitle -->
+        <index type="bf.subtitle">
+            ?inst bf:instanceTitle ?it .
+            ?it bf:subtitle %v FILTER(contains(%v, %s))
+        </index>
+
+        <index type="bf.parttitle">
+            ?inst bf:instanceTitle ?it .
+            ?it bf:partTitle %v FILTER(contains(%v, %s))
+        </index>
+        <!-- We could also go to the works, and get those titles... -->
+
+        <!-- Combining any kind of title into one index -->
+        <index type="bf.anytitle">
+            {
+                ?inst bf:title %v FILTER(contains(%v, %s))
+            } UNION {
+                ?inst bf:titleStatement %v FILTER(contains(%v, %s))
+            } UNION {
+                ?inst ?titlerel ?it . <!-- any kind of link -->
+                ?it a bf:Title <!-- to something that is a title -->
+                { 
+                    ?it bf:titleValue %v FILTER(contains(%v, %s))
+                } UNION {
+                    ?it bf:partTitle %v FILTER(contains(%v, %s))
+                } UNION {
+                    ?it bf:subtitle %v FILTER(contains(%v, %s))
+                }
+            }
+        </index>
+        
+        <!-- Author indexes. Many instances don't have any, works do -->
+        <index type="bf.creator">
+            ?inst bf:creator ?c .
+            ?c bf:label %v FILTER(contains(%v, %s))
+        </index>
+
+        <index type="bf.workcreator">
+            ?inst bf:instanceOf ?work .
+            ?work bf:creator ?c .
+            ?c bf:label %v FILTER(contains(%v, %s))
+        </index>
+
+        <index type="bf.workcontributor">
+            ?inst bf:instanceOf ?work .
+            ?work bf:contributor ?c .
+            ?c bf:label %v FILTER(contains(%v, %s))
+        </index>
+
+        <index type="bf.contributor">
+            ?inst bf:contributor ?c .
+            ?c bf:label %v FILTER(contains(%v, %s))
+        </index>
+
+        <index type="bf.anyauthor">
+            {
+                ?inst bf:creator ?c .
+                ?c bf:label %v FILTER(contains(%v, %s))
+            } UNION {
+                ?inst bf:contributor ?c .
+                ?c bf:label %v FILTER(contains(%v, %s))
+            } UNION {
+                ?inst bf:instanceOf ?work .
+                ?work bf:creator ?c .
+                ?c bf:label %v FILTER(contains(%v, %s))
+            } UNION {
+                ?inst bf:instanceOf ?work .
+                ?work bf:contributor ?c .
+                ?c bf:label %v FILTER(contains(%v, %s))
+            } 
         </index>
 
         <!-- BF-L is just the links -->
