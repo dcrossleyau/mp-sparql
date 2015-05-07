@@ -116,8 +116,15 @@
                     { ?wt bf:subtitle %v FILTER(contains(%v, %s)) } UNION
                     { ?wt bf:partTitle %v FILTER(contains(%v, %s)) }
                 } UNION {
-                    ?thing bf:titleVariation ?tv .
-                    ?tv bf:titleValue %v FILTER(contains(%v, %s))
+                    ?thing ?titlerel ?ti . <!-- any kind of link -->
+                    ?ti a bf:Title <!-- to something that is a title -->
+                    {
+                        ?ti bf:titleValue %v FILTER(contains(%v, %s))
+                    } UNION {
+                        ?ti bf:partTitle %v FILTER(contains(%v, %s))
+                    } UNION {
+                        ?ti bf:subtitle %v FILTER(contains(%v, %s))
+                    }
                 } UNION {
                     ?inst bf:instanceOf ?thing .
                     ?inst bf:instanceTitle ?it .
@@ -159,41 +166,8 @@
 
             <!-- Present formats -->
             <!-- BF-L comes from the "thing" template -->
-            <!-- BF-F expands all links, except to instances and other works -->
+            <!-- BF-F expands all links, even to instances but not other works -->
             <present type="BF-F">
-                CONSTRUCT {
-                    ?thing ?rel ?obj .
-                    ?obj ?rel1 ?obj1 .
-                    ?obj1 ?rel2 ?obj2 .
-                    ?obj2 ?rel3 ?obj3
-                }
-                WHERE {
-
-                    ?thing a bf:Work .
-                    ?thing ?rel ?obj .
-                    OPTIONAL {
-                        ?obj ?rel1 ?obj1
-                        MINUS { ?obj a bf:Work }
-                        MINUS { ?obj a bf:Instance }
-                    }
-                    OPTIONAL {
-                        ?obj1 ?rel2 ?obj2
-                        MINUS { ?obj1 a bf:Work }
-                        MINUS { ?obj1 a bf:Instance }
-                    }
-                    OPTIONAL {
-                        ?obj2 ?rel3 ?obj3
-                        MINUS { ?obj2 a bf:Work }
-                        MINUS { ?obj2 a bf:Instance }
-                    }
-                    ?thing ?rel ?obj FILTER( str(?thing) = %s )
-                    <!-- TODO Use the %u -->
-                    <!-- TODO Use the BF-FI as the BF-F -->
-                }
-            </present>
-
-            <!-- full, with instances. Experimental! -->
-            <present type="BF-FI">
                 CONSTRUCT {
                     %u ?rel ?wobj1 .
                     ?wobj1 ?wrel1 ?wobj2 .
@@ -210,31 +184,29 @@
                         ?wobj ?wrel1 ?wobj1
                         MINUS { ?wobj a bf:Work }
                         MINUS { ?wobj a bf:Instance }
+                        OPTIONAL {
+                            ?wobj1 ?wrel2 ?wobj2
+                            MINUS { ?wobj1 a bf:Work }
+                            MINUS { ?wobj1 a bf:Instance }
+                            OPTIONAL {
+                                ?wobj2 ?wrel3 ?wobj3
+                                MINUS { ?wobj2 a bf:Work }
+                                MINUS { ?wobj2 a bf:Instance }
+                            }
+                        }
                     }
-                    OPTIONAL {
-                        ?wobj1 ?wrel2 ?wobj2
-                        MINUS { ?wobj1 a bf:Work }
-                        MINUS { ?wobj1 a bf:Instance }
-                    }
-                    OPTIONAL {
-                        ?wobj2 ?wrel3 ?wobj3
-                        MINUS { ?wobj2 a bf:Work }
-                        MINUS { ?wobj2 a bf:Instance }
-                    }
-
                     <!-- Link to the instance(s) -->
                     OPTIONAL {
                         ?inst bf:instanceOf %u
-                    }
-                    <!-- and expand the instance -->
-                    OPTIONAL {
-                        ?inst ?irel1 ?iobj1
-                    }
-                    OPTIONAL {
-                        ?iobj1 ?irel2 ?iobj2
-                    }
-                    OPTIONAL {
-                        ?iobj2 ?irel3 ?iobj3
+                        OPTIONAL { <!-- and expand the instance -->
+                            ?inst ?irel1 ?iobj1
+                            OPTIONAL {
+                                ?iobj1 ?irel2 ?iobj2
+                                OPTIONAL {
+                                    ?iobj2 ?irel3 ?iobj3
+                                }
+                            }
+                        }
                     }
                 }
             </present>
@@ -242,7 +214,7 @@
 
         <!-- Instance database -->
 
-        <db path="instance" schema="sparql-results" include="thing">
+        <db path="instance" schema="sparql-results" include="thing smallindex">
             <criteria>?thing a bf:Instance</criteria>
 
             <!-- Title indexes -->
