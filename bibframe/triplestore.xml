@@ -1,38 +1,4 @@
 <?xml version="1.0"?>
-<!DOCTYPE html [
-<!-- Entity definitions for commonly used idioms -->
-<!-- TODO - Now it accepts these, but will not expand them in place! -->
-<!-- Seems we can not use many special characters in these: <> % etc -->
-  <!ENTITY workfull "FOOBAR" >
-  <!ENTITY workfullX "
-          OPTIONAL {
-              ?wobj ?wrel1 ?wobj1
-              MINUS { ?wobj a bf:Work }
-              MINUS { ?wobj a bf:Instance }
-          }
-          OPTIONAL {
-              ?wobj1 ?wrel2 ?wobj2
-              MINUS { ?wobj1 a bf:Work }
-              MINUS { ?wobj1 a bf:Instance }
-          }
-          OPTIONAL {
-              ?wobj2 ?wrel3 ?wobj3
-              MINUS { ?wobj2 a bf:Work }
-              MINUS { ?wobj2 a bf:Instance }
-          }
-  ">
-  <!ENTITY instfull "
-          OPTIONAL {
-            ?inst ?irel1 ?iobj1
-          }
-          OPTIONAL {
-            ?iobj1 ?irel2 ?iobj2
-          }
-          OPTIONAL {
-            ?iobj2 ?irel3 ?iobj3
-          }
-  ">
-]>
 
 <filters  xmlns="http://indexdata.com/metaproxy">
     <filter type="sparql">
@@ -41,18 +7,53 @@
         <!--defaults uri="http://bibframe.indexdata.com/sparql/"/-->
         <defaults uri="http://localhost:8890/sparql/"/>
 
-        <!-- work database -->
-
-        <db path="work" schema="sparql-results">
+        <!-- "thing" database that will be included all real databases -->
+        <db path="thing">  <!-- no schema, so it is not directly searchable -->
             <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
             <prefix>bf: http://bibframe.org/vocab/</prefix>
+            <form>SELECT DISTINCT ?thing </form>
 
-            <!-- The search clause just finds ?works, present is done below -->
-            <form>SELECT DISTINCT ?work </form>
-            <criteria>?work a bf:Work</criteria>
+            <!-- Common indexes -->
 
-            <!-- bf.uri is a simple way to get to a work -->
-            <index type="bf.uri"> ?work a bf:Work FILTER( ?work  = %u ) </index>
+            <!-- bf.uri is a simple way to get to a thing -->
+            <index type="bf.uri">
+                ?thing  rdf:type ?any FILTER( ?thing  = %u ) </index>
+
+
+            <!-- The BF-L present format is the same for everything -->
+            <!-- Each db is supposed to provide a dedicated BF-F present format -->
+            <present type="BF-L">
+                CONSTRUCT {
+                    ?thing ?rel ?subj
+                }
+                WHERE {
+                    ?thing ?rel ?subj .
+                    ?thing ?rel ?subj FILTER( str(?thing) = %s )
+                }
+            </present>
+
+        </db>
+
+        <!-- "smallindex" db that will be included in work and instance -->
+        <!-- It provides the small indexes like bf.person, bf.place, etc -->
+        <db path="smallindex">
+            <!-- Indexes for persons, organizations, etc -->
+            <!-- The person (etc) may be in any relation to the thing, -->
+            <!-- subject, creator, etc, as long as there is a direct link -->
+            <index type="bf.person">
+                ?thing ?rel ?person .
+                ?person a bf:Person .
+                ?person bf:label %v FILTER(contains(%v, %s))
+            </index>
+            <!-- TODO - make many more like the person above -->
+        </db>
+
+        <!-- work database -->
+
+        <db path="work" schema="sparql-results" include="thing smallindex">
+
+            <!-- The search clause just finds ?things, present is done below -->
+            <criteria>?thing a bf:Work</criteria>
 
             <!-- Title indexes -->
             <!-- These are messy, there are so many ways to get to a title -->
@@ -60,13 +61,13 @@
             <!-- Main title. Looks logical, but in practice we have not seen -->
             <!-- many of these -->
             <index type="bf.title">
-                    ?work bf:title %v FILTER(contains(%v, %s))
+                    ?thing bf:title %v FILTER(contains(%v, %s))
             </index>
 
             <!-- worktitle.titleValue seems to be the most common way to -->
             <!-- store the title of a work -->
             <index type="bf.worktitle">
-                ?work bf:workTitle ?wt .
+                ?thing bf:workTitle ?wt .
                 ?wt bf:titleValue %v FILTER(contains(%v, %s))
             </index>
 
@@ -75,32 +76,32 @@
             <!-- TODO is "maintitle" a good name for this? I made it up myself -->
             <index type="bf.maintitle">
                 {
-                    ?work bf:workTitle ?wt .
+                    ?thing bf:workTitle ?wt .
                     ?wt bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?work bf:title %v FILTER(contains(%v, %s))
+                    ?thing bf:title %v FILTER(contains(%v, %s))
                 }
             </index>
 
             <!-- the worktitle can also contain a subtitle and a parttitle -->
-            <index type="bf.subtitle">?work bf:workTitle ?wt .
+            <index type="bf.subtitle">?thing bf:workTitle ?wt .
                 ?wt bf:subtitle %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.parttitle">
-                ?work bf:workTitle ?wt .
+                ?thing bf:workTitle ?wt .
                 ?wt bf:partTitle %v FILTER(contains(%v, %s))
             </index>
 
             <!-- work.titlevariation - this could also have sub- and partTitles -->
             <index type="bf.titlevariation">
-                ?work bf:titleVariation ?tv .
+                ?thing bf:titleVariation ?tv .
                 ?tv bf:titleValue %v FILTER(contains(%v, %s))
             </index>
 
             <!-- Instance titles -->
             <index type="bf.instancetitle">
-                ?inst bf:instanceOf ?work .
+                ?inst bf:instanceOf ?thing .
                 ?inst bf:instanceTitle ?it .
                 ?it bf:titleValue %v FILTER(contains(%v, %s))
             </index>
@@ -110,39 +111,39 @@
             <!-- TODO - See the anytitle in instance for a more flexible way -->
             <index type="bf.anytitle">
                 {
-                    ?work bf:workTitle ?wt .
+                    ?thing bf:workTitle ?wt .
                     { ?wt bf:titleValue %v FILTER(contains(%v, %s)) } UNION
                     { ?wt bf:subtitle %v FILTER(contains(%v, %s)) } UNION
                     { ?wt bf:partTitle %v FILTER(contains(%v, %s)) }
                 } UNION {
-                    ?work bf:titleVariation ?tv .
+                    ?thing bf:titleVariation ?tv .
                     ?tv bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?inst bf:instanceOf ?work .
+                    ?inst bf:instanceOf ?thing .
                     ?inst bf:instanceTitle ?it .
                     ?it bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?work bf:title %v FILTER(contains(%v, %s))
+                    ?thing bf:title %v FILTER(contains(%v, %s))
                 }
             </index>
 
             <!-- Author indexes. Much simpler than titles. -->
             <index type="bf.creator">
-                ?work bf:creator ?c .
+                ?thing bf:creator ?c .
                 ?c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.contributor">
-                ?work bf:contributor ?c .
+                ?thing bf:contributor ?c .
                 ?c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.anyauthor"> <!-- TODO - Is this a good name? -->
                 {
-                    ?work bf:creator ?c .
+                    ?thing bf:creator ?c .
                     ?c bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?work bf:contributor ?c .
+                    ?thing bf:contributor ?c .
                     ?c bf:label %v FILTER(contains(%v, %s))
                 }
             </index>
@@ -151,46 +152,25 @@
             <!-- Note that these refer to anything with a bf:subject relation -->
             <!-- The actual item is likely to be something like topic person etc -->
             <index type="bf.subject">
-                ?work bf:subject ?subject .
+                ?thing bf:subject ?subject .
                 ?subject bf:label %v FILTER(contains(%v, %s))
             </index>
 
-            <!-- Indexes for persons, organizations, etc -->
-            <!-- The person (etc) may be in any relation to the work, -->
-            <!-- subject, creator, etc, as long as there is a direct link -->
-            <index type="bf.person">
-                ?work ?rel ?person .
-                ?person a bf:Person .
-                ?person bf:label %v FILTER(contains(%v, %s))
-            </index>
-            <!-- TODO - make many more like the person above -->
 
             <!-- Present formats -->
-            <!-- BF-L is just the links -->
-            <present type="BF-L">
-                CONSTRUCT {
-                    ?work ?rel ?subj
-                }
-                WHERE {
-                    ?work a bf:Work .
-                    ?work ?rel ?subj .
-                    ?work ?rel ?subj FILTER( str(?work) = %s )
-                }
-            </present>
-
+            <!-- BF-L comes from the "thing" template -->
             <!-- BF-F expands all links, except to instances and other works -->
             <present type="BF-F">
                 CONSTRUCT {
-                    ?work ?rel ?obj .
+                    ?thing ?rel ?obj .
                     ?obj ?rel1 ?obj1 .
                     ?obj1 ?rel2 ?obj2 .
                     ?obj2 ?rel3 ?obj3
                 }
                 WHERE {
-                    &workfull; <!-- This does not seem to get expanded!! TODO -->
 
-                    ?work a bf:Work .
-                    ?work ?rel ?obj .
+                    ?thing a bf:Work .
+                    ?thing ?rel ?obj .
                     OPTIONAL {
                         ?obj ?rel1 ?obj1
                         MINUS { ?obj a bf:Work }
@@ -206,7 +186,7 @@
                         MINUS { ?obj2 a bf:Work }
                         MINUS { ?obj2 a bf:Instance }
                     }
-                    ?work ?rel ?obj FILTER( str(?work) = %s )
+                    ?thing ?rel ?obj FILTER( str(?thing) = %s )
                     <!-- TODO Use the %u -->
                     <!-- TODO Use the BF-FI as the BF-F -->
                 }
@@ -262,56 +242,47 @@
 
         <!-- Instance database -->
 
-        <db path="instance" schema="sparql-results">
-            <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-            <prefix>bf: http://bibframe.org/vocab/</prefix>
-            <!-- The search clause just finds ?insts, present is done below -->
-            <form>SELECT DISTINCT ?inst </form>
-            <criteria>?inst a bf:Instance</criteria>
-
-            <!-- bf.uri is a simple way to get to a work -->
-            <index type="bf.uri">
-                ?inst a bf:Instance FILTER( ?inst  = %u )
-            </index>
+        <db path="instance" schema="sparql-results" include="thing">
+            <criteria>?thing a bf:Instance</criteria>
 
             <!-- Title indexes -->
             <!-- These are messy, there are so many ways to get to a title -->
 
             <!-- Main title. Looks logical. Many instances seem to have a title -->
             <index type="bf.title">
-                ?inst bf:title %v FILTER(contains(%v, %s))
+                ?thing bf:title %v FILTER(contains(%v, %s))
             </index>
 
             <!-- instancetitle is also pretty common -->
             <index type="bf.instancetitle">
-                ?inst bf:instanceTitle ?it .
+                ?thing bf:instanceTitle ?it .
                 ?it bf:titleValue %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.titlestatement">
-                ?inst bf:titleStatement %v FILTER(contains(%v, %s))
+                ?thing bf:titleStatement %v FILTER(contains(%v, %s))
             </index>
 
             <!-- Combining the two above, since users are not likely to know how
             a given title has been indexed -->
             <index type="bf.maintitle">
                 {
-                    ?inst bf:instanceTitle ?it .
+                    ?thing bf:instanceTitle ?it .
                     ?it bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?inst bf:title %v FILTER(contains(%v, %s))
+                    ?thing bf:title %v FILTER(contains(%v, %s))
                 }
             </index>
 
 
             <!-- the instancetitle can also contain a subtitle and a parttitle -->
             <index type="bf.subtitle">
-                ?inst bf:instanceTitle ?it .
+                ?thing bf:instanceTitle ?it .
                 ?it bf:subtitle %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.parttitle">
-                ?inst bf:instanceTitle ?it .
+                ?thing bf:instanceTitle ?it .
                 ?it bf:partTitle %v FILTER(contains(%v, %s))
             </index>
             <!-- We could also go to the works, and get those titles... -->
@@ -319,11 +290,11 @@
             <!-- Combining any kind of title into one index -->
             <index type="bf.anytitle">
                 {
-                    ?inst bf:title %v FILTER(contains(%v, %s))
+                    ?thing bf:title %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?inst bf:titleStatement %v FILTER(contains(%v, %s))
+                    ?thing bf:titleStatement %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?inst ?titlerel ?it . <!-- any kind of link -->
+                    ?thing ?titlerel ?it . <!-- any kind of link -->
                     ?it a bf:Title <!-- to something that is a title -->
                     {
                         ?it bf:titleValue %v FILTER(contains(%v, %s))
@@ -337,57 +308,46 @@
 
             <!-- Author indexes. Many instances don't have any, works do -->
             <index type="bf.creator">
-                ?inst bf:creator ?c .
+                ?thing bf:creator ?c .
                 ?c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.workcreator">
-                ?inst bf:instanceOf ?work .
+                ?thing bf:instanceOf ?work .
                 ?work bf:creator ?c .
                 ?c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.workcontributor">
-                ?inst bf:instanceOf ?work .
+                ?thing bf:instanceOf ?work .
                 ?work bf:contributor ?c .
                 ?c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.contributor">
-                ?inst bf:contributor ?c .
+                ?thing bf:contributor ?c .
                 ?c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.anyauthor">
                 {
-                    ?inst bf:creator ?c .
+                    ?thing bf:creator ?c .
                     ?c bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?inst bf:contributor ?c .
+                    ?thing bf:contributor ?c .
                     ?c bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?inst bf:instanceOf ?work .
+                    ?thing bf:instanceOf ?work .
                     ?work bf:creator ?c .
                     ?c bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?inst bf:instanceOf ?work .
+                    ?thing bf:instanceOf ?work .
                     ?work bf:contributor ?c .
                     ?c bf:label %v FILTER(contains(%v, %s))
                 }
             </index>
 
-            <!-- BF-L is just the links -->
-            <present type="BF-L">
-                CONSTRUCT {
-                    ?inst ?rel ?subj
-                }
-                WHERE {
-                    ?inst a bf:Instance .
-                    ?inst ?rel ?subj .
-                    ?inst ?rel ?subj FILTER( str(?inst) = %s )
-                }
-            </present>
-
+            <!-- Presetn formats. BF-L comes from "thing" -->
             <!-- Full instance, with the related work too -->
             <present type="BF-F">
                 CONSTRUCT {
@@ -440,31 +400,11 @@
         <!-- "small" contains all the things common to all small databases -->
         <!-- It is only to be used as an include, it is not searchable, since -->
         <!-- it has no schema atribute -->
-        <!-- It is divided into "smallindex", "smallbody", and a "small" that includes
-        both, so that title searches can include the body, but have different indexes -->
+        <!-- It is divided into "smallbody", and a "small" that includes -->
+        <!-- the general indexes, so that title searches can include the body, -->
+        <!-- but have different "any" indexes -->
 
-        <db path="smallindex">
-            <index type="any">
-                ?thing bf:label %v FILTER(contains(%v, %s))
-            </index>
-            <index type="1016">
-                ?thing bf:label %v FILTER(contains(%v, %s))
-            </index>
-        </db>
-
-        <db path="smallbody">
-            <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
-            <prefix>bf: http://bibframe.org/vocab/</prefix>
-            <form>SELECT DISTINCT ?thing </form>
-            <criteria>?thing ?rel ?obj</criteria>
-            <present type="BF-L">
-                CONSTRUCT {
-                    %u ?rel ?obj
-                }
-                WHERE {
-                    %u ?rel ?obj .
-                }
-            </present>
+        <db path="smallbody" include="thing">
             <present type="BF-F">
                 <!-- I don't think we need more than one level -->
                 <!--for these simple databases -->
@@ -480,7 +420,14 @@
         </db>
 
         <!-- The combined "small" database defaults -->
-        <db path="small" include="smallindex smallbody"/>
+        <db path="small" include="smallbody">
+            <index type="any">
+                ?thing bf:label %v FILTER(contains(%v, %s))
+            </index>
+            <index type="1016">
+                ?thing bf:label %v FILTER(contains(%v, %s))
+            </index>
+        </db>
 
         <!-- Various "small" databases, leaning heavily on the defaults above -->
         <db path="place" schema="sparql-results" include="small" >
