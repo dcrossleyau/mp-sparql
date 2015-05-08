@@ -24,11 +24,10 @@
             <!-- Each db is supposed to provide a dedicated BF-F present format -->
             <present type="BF-L">
                 CONSTRUCT {
-                    ?thing ?rel ?subj
+                    %u ?rel ?subj
                 }
                 WHERE {
-                    ?thing ?rel ?subj .
-                    ?thing ?rel ?subj FILTER( str(?thing) = %s )
+                    %u ?rel ?subj .
                 }
             </present>
 
@@ -324,11 +323,11 @@
                 }
                 WHERE {
                     %u a bf:Instance .
-                    %u ?irel1 ?iobj1
+                    %u ?irel1 ?iobj1 .
                     OPTIONAL {
                         ?iobj1 ?irel2 ?iobj2
                             MINUS { ?iobj2 a bf:Work }
-                            MINUS { ?iobj2 a bf:Instance }
+                            MINUS { ?iobj2 a bf:Instance } .
                         OPTIONAL {
                             ?iobj2 ?irel3 ?iobj3
                                 MINUS { ?iobj3 a bf:Work }
@@ -336,12 +335,12 @@
                         }
                     }
                     OPTIONAL { <!-- Work -->
-                        %u bf:instanceOf ?work
-                        ?work ?wrel1 ?wobj1
+                        %u bf:instanceOf ?work .
+                        ?work ?wrel1 ?wobj1 .
                         OPTIONAL {
                             ?wobj1 ?wrel2 ?wobj2
                                 MINUS { ?wobj1 a bf:Work }
-                                MINUS { ?wobj1 a bf:Instance }
+                                MINUS { ?wobj1 a bf:Instance } .
                             OPTIONAL {
                                 ?wobj2 ?wrel3 ?wobj3
                                     MINUS { ?wobj2 a bf:Work }
