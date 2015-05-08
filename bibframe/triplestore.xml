@@ -321,6 +321,31 @@
                 }
             </index>
 
+            <!-- isbn index. The Instance may contain a isbn10 or isbn13. -->
+            <!-- These can be literal values like -->
+            <!--   http://isbn.example.org/1906833214 which we need to search -->
+            <!-- by our usual substring match. Or they can be links to Identivfiers -->
+            <!-- which will have a proper identifierValue on which we can do -->
+            <!-- an exact match -->
+            <index type="bf.isbn">
+                {
+                    ?thing bf:isbn10  %v
+                        FILTER(contains(str(%v), %s))
+                } UNION {
+                    ?thing bf:isbn13  %v
+                        FILTER(contains(str(%v), %s))
+                } UNION {
+                    {
+                        ?thing bf:isbn10 ?isbn
+                    } UNION {
+                        ?thing bf:isbn13 ?isbn
+                    }
+                    ?isbn a bf:Identifier  .
+                    ?isbn bf:identifierValue  %v FILTER( %v = %s )
+                }
+            </index>
+
+
             <!-- Present formats. BF-L comes from "thing" -->
             <!-- Full instance, with the related work too -->
             <present type="BF-V">
