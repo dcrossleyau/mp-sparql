@@ -326,14 +326,14 @@
             <!--   http://isbn.example.org/1906833214 which we need to search -->
             <!-- by our usual substring match. Or they can be links to Identivfiers -->
             <!-- which will have a proper identifierValue on which we can do -->
-            <!-- an exact match -->
+            <!-- an exact match.  -->
             <index type="bf.isbn">
                 {
                     ?thing bf:isbn10  %v
-                        FILTER(contains(str(%v), %s))
+                        FILTER(isLiteral(%v) &amp;&amp; contains(%v, %s))
                 } UNION {
                     ?thing bf:isbn13  %v
-                        FILTER(contains(str(%v), %s))
+                        FILTER(isLiteral(%v) &amp;&amp; contains(%v, %s))
                 } UNION {
                     {
                         ?thing bf:isbn10 ?isbn
