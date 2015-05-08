@@ -177,12 +177,12 @@
 
                     OPTIONAL {
                         ?wobj1 ?wrel2 ?wobj2
-                        MINUS { ?wobj1 a bf:Work }
-                        MINUS { ?wobj1 a bf:Instance }
+                            MINUS { ?wobj1 a bf:Work }
+                            MINUS { ?wobj1 a bf:Instance }
                         OPTIONAL {
                             ?wobj2 ?wrel3 ?wobj3
-                            MINUS { ?wobj2 a bf:Work }
-                            MINUS { ?wobj2 a bf:Instance }
+                                MINUS { ?wobj2 a bf:Work }
+                                MINUS { ?wobj2 a bf:Instance }
                         }
                     }
                     <!-- Link to the instance(s) -->
@@ -191,12 +191,12 @@
                         ?inst ?irel1 ?iobj1
                         OPTIONAL {
                             ?iobj1 ?irel2 ?iobj2
-                            MINUS { ?iobj1 a bf:Work }
-                            MINUS { ?iobj1 a bf:Instance }
+                                MINUS { ?iobj1 a bf:Work }
+                                MINUS { ?iobj1 a bf:Instance }
                             OPTIONAL {
                                 ?iobj2 ?irel3 ?iobj3
-                                MINUS { ?iobj2 a bf:Work }
-                                MINUS { ?iobj2 a bf:Instance }
+                                    MINUS { ?iobj2 a bf:Work }
+                                    MINUS { ?iobj2 a bf:Instance }
                             }
                         }
                     }
@@ -327,26 +327,25 @@
                     %u ?irel1 ?iobj1
                     OPTIONAL {
                         ?iobj1 ?irel2 ?iobj2
-                        MINUS { ?iobj2 a bf:Work }
-                        MINUS { ?iobj2 a bf:Instance }
+                            MINUS { ?iobj2 a bf:Work }
+                            MINUS { ?iobj2 a bf:Instance }
                         OPTIONAL {
                             ?iobj2 ?irel3 ?iobj3
-                            MINUS { ?iobj3 a bf:Work }
-                            MINUS { ?iobj3 a bf:Instance }
+                                MINUS { ?iobj3 a bf:Work }
+                                MINUS { ?iobj3 a bf:Instance }
                         }
                     }
-
-                    OPTIONAL {
+                    OPTIONAL { <!-- Work -->
                         %u bf:instanceOf ?work
                         ?work ?wrel1 ?wobj1
                         OPTIONAL {
                             ?wobj1 ?wrel2 ?wobj2
-                            MINUS { ?wobj1 a bf:Work }
-                            MINUS { ?wobj1 a bf:Instance }
+                                MINUS { ?wobj1 a bf:Work }
+                                MINUS { ?wobj1 a bf:Instance }
                             OPTIONAL {
                                 ?wobj2 ?wrel3 ?wobj3
-                                MINUS { ?wobj2 a bf:Work }
-                                MINUS { ?wobj2 a bf:Instance }
+                                    MINUS { ?wobj2 a bf:Work }
+                                    MINUS { ?wobj2 a bf:Instance }
                             }
                         }
                     }
