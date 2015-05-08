@@ -21,7 +21,7 @@
 
 
             <!-- The BF-L present format is the same for everything -->
-            <!-- Each db is supposed to provide a dedicated BF-F present format -->
+            <!-- Each db is supposed to provide a dedicated BF-V present format -->
             <present type="BF-L">
                 CONSTRUCT {
                     %u ?rel ?subj
@@ -160,8 +160,8 @@
 
             <!-- Present formats -->
             <!-- BF-L comes from the "thing" template -->
-            <!-- BF-F expands all links, even to instances but not other works -->
-            <present type="BF-F">
+            <!-- BF-V expands all links, even to instances but not other works -->
+            <present type="BF-V">
                 CONSTRUCT {
                     %u ?rel ?wobj1 .
                     ?wobj1 ?wrel1 ?wobj2 .
@@ -312,7 +312,7 @@
 
             <!-- Present formats. BF-L comes from "thing" -->
             <!-- Full instance, with the related work too -->
-            <present type="BF-F">
+            <present type="BF-V">
                 CONSTRUCT {
                     %u ?irel1 ?iobj1 .
                     ?iobj1 ?irel2 ?iobj2 .
@@ -363,7 +363,7 @@
         <!-- but have different "any" indexes -->
 
         <db path="smallbody" include="thing">
-            <present type="BF-F">
+            <present type="BF-V">
                 <!-- I don't think we need more than one level -->
                 <!--for these simple databases -->
                 CONSTRUCT {
