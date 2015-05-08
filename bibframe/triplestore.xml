@@ -108,15 +108,11 @@
 
             <!-- Combined title index. There are so many ways titles can be expresses
             in Bibframe, this seems to cover most of what we have seen -->
-            <!-- TODO - See the anytitle in instance for a more flexible way -->
             <index type="bf.anytitle">
                 {
-                    ?thing bf:workTitle ?wt .
-                    { ?wt bf:titleValue %v FILTER(contains(%v, %s)) } UNION
-                    { ?wt bf:subtitle %v FILTER(contains(%v, %s)) } UNION
-                    { ?wt bf:partTitle %v FILTER(contains(%v, %s)) }
-                } UNION {
-                    ?thing ?titlerel ?ti . <!-- any kind of link -->
+                    ?thing bf:title %v FILTER(contains(%v, %s))
+                } UNION { <!-- any kind of link -->
+                    ?thing ?titlerel ?ti . <!-- mostly workTitle, but others too -->
                     ?ti a bf:Title <!-- to something that is a title -->
                     {
                         ?ti bf:titleValue %v FILTER(contains(%v, %s))
@@ -130,7 +126,6 @@
                     ?inst bf:instanceTitle ?it .
                     ?it bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?thing bf:title %v FILTER(contains(%v, %s))
                 }
             </index>
 
@@ -182,16 +177,16 @@
 
                     OPTIONAL {
                         ?wobj ?wrel1 ?wobj1
-                        MINUS { ?wobj a bf:Work }
-                        MINUS { ?wobj a bf:Instance }
+                        MINUS { ?wobj1 a bf:Work }
+                        MINUS { ?wobj1 a bf:Instance }
                         OPTIONAL {
                             ?wobj1 ?wrel2 ?wobj2
-                            MINUS { ?wobj1 a bf:Work }
-                            MINUS { ?wobj1 a bf:Instance }
+                            MINUS { ?wobj2 a bf:Work }
+                            MINUS { ?wobj2 a bf:Instance }
                             OPTIONAL {
                                 ?wobj2 ?wrel3 ?wobj3
-                                MINUS { ?wobj2 a bf:Work }
-                                MINUS { ?wobj2 a bf:Instance }
+                                MINUS { ?wobj3 a bf:Work }
+                                MINUS { ?wobj3 a bf:Instance }
                             }
                         }
                     }
@@ -319,7 +314,7 @@
                 }
             </index>
 
-            <!-- Presetn formats. BF-L comes from "thing" -->
+            <!-- Present formats. BF-L comes from "thing" -->
             <!-- Full instance, with the related work too -->
             <present type="BF-F">
                 CONSTRUCT {
@@ -335,12 +330,12 @@
                     %u ?irel1 ?iobj1
                     OPTIONAL {
                         ?iobj1 ?irel2 ?iobj2
-                        MINUS { ?iobj1 a bf:Work }
-                        MINUS { ?iobj1 a bf:Instance }
+                        MINUS { ?iobj2 a bf:Work }
+                        MINUS { ?iobj2 a bf:Instance }
                         OPTIONAL {
                             ?iobj2 ?irel3 ?iobj3
-                            MINUS { ?iobj2 a bf:Work }
-                            MINUS { ?iobj2 a bf:Instance }
+                            MINUS { ?iobj3 a bf:Work }
+                            MINUS { ?iobj3 a bf:Instance }
                         }
                     }
 
