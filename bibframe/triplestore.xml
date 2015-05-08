@@ -163,16 +163,16 @@
             <!-- BF-V expands all links, even to instances but not other works -->
             <present type="BF-V">
                 CONSTRUCT {
-                    %u ?rel ?wobj1 .
-                    ?wobj1 ?wrel1 ?wobj2 .
-                    ?wobj2 ?wrel2 ?wobj3 .
+                    %u ?wrel1 ?wobj1 .
+                    ?wobj1 ?wrel2 ?wobj2 .
+                    ?wobj2 ?wrel3 ?wobj3 .
                     ?inst ?irel1 ?iobj1 .
                     ?iobj1 ?irel2 ?iobj2 .
                     ?iobj2 ?irel3 ?iobj3
                 }
                 WHERE {
                     %u a bf:Work .
-                    %u ?rel ?wobj1 .
+                    %u ?wrel1 ?wobj1 .
 
                     OPTIONAL {
                         ?wobj1 ?wrel2 ?wobj2
