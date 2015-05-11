@@ -163,7 +163,6 @@
                     %v_inst bf:instanceOf ?thing .
                     %v_inst bf:instanceTitle %v_ti .
                     %v_ti bf:titleValue %v FILTER(contains(%v, %s))
-                } UNION {
                 }
             </index>
 
@@ -377,6 +376,13 @@
                     %v_isbn bf:identifierValue  %v FILTER( %v = %s )
                 }
             </index>
+            
+            <!-- lccn number, a simpler index for id numbers -->
+            <index type="bf.lccn">
+                ?thing bf:lccn %v_lccn .
+                %v_lccn a bf:Identifier  .
+                %v_lccn bf:identifierValue  %v FILTER( %v = %s )
+            </index>
 
 
             <!-- Present formats. BF-L comes from "thing" -->
@@ -546,11 +552,15 @@
 
         <!-- A hack to be able to look at any triplet in the base -->
         <db path="node" schema="sparql-results" include="smallbody">
-            <index type="any">?thing ?rel ?obj FILTER( str(?thing) = %s )</index>
+            <index type="any">
+                ?thing ?rel ?obj FILTER( str(?thing) = %s )
+            </index>
         </db>
         <!-- A way to see which triplets refers to a given uri. -->
         <db path="ref" schema="sparql-results" include="smallbody">
-            <index type="any">?thing ?rel ?obj FILTER( str(?obj) = %s )</index>
+            <index type="any">
+                ?thing ?rel ?obj FILTER( str(?obj) = %s )
+            </index>
         </db>
     </filter>
 
