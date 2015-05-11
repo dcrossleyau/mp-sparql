@@ -43,41 +43,45 @@
         <!-- It provides the small indexes like bf.person, bf.place, etc -->
         <!-- These match a person, etc, no matter what the relation to that -->
         <!-- is, as long as there is a direct link -->
+        <!-- The %v gets assigned a new variable name, like ?v0. -->
+        <!-- The %vx gets the same ?v0, with the x suffixed to it, by regular -->
+        <!-- This way, we use a different variable for each index clause, and -->
+        <!-- do not get into trouble if we have an AND between two of the same kind -->
         <db path="smallindex">
-            <index type="bf.person">
-                ?thing ?rel ?person .
-                ?person a bf:Person .
-                ?person bf:label %v FILTER(contains(%v, %s))
+            <index type="bf.personX">
+                ?thing ?rel %vx .
+                %vx a bf:Person .
+                %vx bf:label %v FILTER(contains(%v, %s))
             </index>
             <index type="bf.topic">
-                ?thing ?rel ?topic .
-                ?topic a bf:Topic .
-                ?topic bf:label %v FILTER(contains(%v, %s))
+                ?thing ?rel %vx .
+                %vx a bf:Topic .
+                %vx bf:label %v FILTER(contains(%v, %s))
             </index>
             <index type="bf.place">
-                ?thing ?rel ?place .
-                ?place a bf:Place .
-                ?place bf:label %v FILTER(contains(%v, %s))
+                ?thing ?rel %vx .
+                %vx a bf:Place .
+                %vx bf:label %v FILTER(contains(%v, %s))
             </index>
             <index type="bf.agent">
-                ?thing ?rel ?person .
-                ?person a bf:Agent .
-                ?person bf:label %v FILTER(contains(%v, %s))
+                ?thing ?rel %vx .
+                %vx a bf:Agent .
+                %vx bf:label %v FILTER(contains(%v, %s))
             </index>
             <index type="bf.meeting">
-                ?thing ?rel ?meeting .
-                ?meeting a bf:Meeting .
-                ?meeting bf:label %v FILTER(contains(%v, %s))
+                ?thing ?rel %vx .
+                %vx a bf:Meeting .
+                %vx bf:label %v FILTER(contains(%v, %s))
             </index>
             <index type="bf.organization">
-                ?thing ?rel ?organization .
-                ?organization a bf:Organization .
-                ?organization bf:label %v FILTER(contains(%v, %s))
+                ?thing ?rel %vx .
+                %vx a bf:Organization .
+                %vx bf:label %v FILTER(contains(%v, %s))
             </index>
             <index type="bf.event">
-                ?thing ?rel ?event .
-                ?event a bf:Event .
-                ?event bf:label %v FILTER(contains(%v, %s))
+                ?thing ?rel %vx .
+                %vx a bf:Event .
+                %vx bf:label %v FILTER(contains(%v, %s))
             </index>
         </db>
 
@@ -100,8 +104,8 @@
             <!-- worktitle.titleValue seems to be the most common way to -->
             <!-- store the title of a work -->
             <index type="bf.worktitle">
-                ?thing bf:workTitle ?wt .
-                ?wt bf:titleValue %v FILTER(contains(%v, %s))
+                ?thing bf:workTitle %v_wt .
+                %v_wt bf:titleValue %v FILTER(contains(%v, %s))
             </index>
 
             <!-- Combining the two above, since users are not likely -->
@@ -109,34 +113,35 @@
             <!-- TODO is "maintitle" a good name for this? I made it up myself -->
             <index type="bf.maintitle">
                 {
-                    ?thing bf:workTitle ?wt .
-                    ?wt bf:titleValue %v FILTER(contains(%v, %s))
+                    ?thing bf:workTitle %v_wt .
+                    %v_wt bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
                     ?thing bf:title %v FILTER(contains(%v, %s))
                 }
             </index>
 
             <!-- the worktitle can also contain a subtitle and a parttitle -->
-            <index type="bf.subtitle">?thing bf:workTitle ?wt .
-                ?wt bf:subtitle %v FILTER(contains(%v, %s))
+            <index type="bf.subtitle">
+                ?thing bf:workTitle %v_wt .
+                %v_wt bf:subtitle %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.parttitle">
-                ?thing bf:workTitle ?wt .
-                ?wt bf:partTitle %v FILTER(contains(%v, %s))
+                ?thing bf:workTitle %v_wt .
+                %v_wt bf:partTitle %v FILTER(contains(%v, %s))
             </index>
 
             <!-- work.titlevariation - this could also have sub- and partTitles -->
             <index type="bf.titlevariation">
-                ?thing bf:titleVariation ?tv .
-                ?tv bf:titleValue %v FILTER(contains(%v, %s))
+                ?thing bf:titleVariation %v_tv .
+                %v_tv bf:titleValue %v FILTER(contains(%v, %s))
             </index>
 
             <!-- Instance titles -->
             <index type="bf.instancetitle">
-                ?inst bf:instanceOf ?thing .
-                ?inst bf:instanceTitle ?it .
-                ?it bf:titleValue %v FILTER(contains(%v, %s))
+                %v_inst bf:instanceOf ?thing .
+                %v_inst bf:instanceTitle %v_tit .
+                %v_tit bf:titleValue %v FILTER(contains(%v, %s))
             </index>
 
             <!-- Combined title index. There are so many ways titles can be expresses
@@ -145,41 +150,41 @@
                 {
                     ?thing bf:title %v FILTER(contains(%v, %s))
                 } UNION { <!-- any kind of link -->
-                    ?thing ?titlerel ?ti . <!-- mostly workTitle, but others too -->
-                    ?ti a bf:Title <!-- to something that is a title -->
+                    ?thing ?titlerel %v_ti . <!-- mostly workTitle, but others too -->
+                    %v_ti a bf:Title <!-- to something that is a title -->
                     {
-                        ?ti bf:titleValue %v FILTER(contains(%v, %s))
+                        %v_ti bf:titleValue %v FILTER(contains(%v, %s))
                     } UNION {
-                        ?ti bf:partTitle %v FILTER(contains(%v, %s))
+                        %v_ti bf:partTitle %v FILTER(contains(%v, %s))
                     } UNION {
-                        ?ti bf:subtitle %v FILTER(contains(%v, %s))
+                        %v_ti bf:subtitle %v FILTER(contains(%v, %s))
                     }
                 } UNION {
-                    ?inst bf:instanceOf ?thing .
-                    ?inst bf:instanceTitle ?it .
-                    ?it bf:titleValue %v FILTER(contains(%v, %s))
+                    %v_inst bf:instanceOf ?thing .
+                    %v_inst bf:instanceTitle %v_ti .
+                    %v_ti bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
                 }
             </index>
 
             <!-- Author indexes. Much simpler than titles. -->
             <index type="bf.creator">
-                ?thing bf:creator ?c .
-                ?c bf:label %v FILTER(contains(%v, %s))
+                ?thing bf:creator %v_c .
+                %v_c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.contributor">
-                ?thing bf:contributor ?c .
-                ?c bf:label %v FILTER(contains(%v, %s))
+                ?thing bf:contributor %v_c .
+                %v_c bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.anyauthor"> <!-- TODO - Is this a good name? -->
                 {
-                    ?thing bf:creator ?c .
-                    ?c bf:label %v FILTER(contains(%v, %s))
+                    ?thing bf:creator %v_c .
+                    %v_c bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?thing bf:contributor ?c .
-                    ?c bf:label %v FILTER(contains(%v, %s))
+                    ?thing bf:contributor %v_c .
+                    %v_c bf:label %v FILTER(contains(%v, %s))
                 }
             </index>
 
@@ -187,8 +192,8 @@
             <!-- Note that these refer to anything with a bf:subject relation -->
             <!-- The actual item is likely to be something like topic person etc -->
             <index type="bf.subject">
-                ?thing bf:subject ?subject .
-                ?subject bf:label %v FILTER(contains(%v, %s))
+                ?thing bf:subject %v_su .
+                %v_su bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <!-- contentCategory can be searched with complete URIs like -->
@@ -257,8 +262,8 @@
 
             <!-- instancetitle is also pretty common -->
             <index type="bf.instancetitle">
-                ?thing bf:instanceTitle ?it .
-                ?it bf:titleValue %v FILTER(contains(%v, %s))
+                ?thing bf:instanceTitle %v_it .
+                %v_it bf:titleValue %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.titlestatement">
@@ -269,8 +274,8 @@
             a given title has been indexed -->
             <index type="bf.maintitle">
                 {
-                    ?thing bf:instanceTitle ?it .
-                    ?it bf:titleValue %v FILTER(contains(%v, %s))
+                    ?thing bf:instanceTitle %v_it .
+                    %v_it bf:titleValue %v FILTER(contains(%v, %s))
                 } UNION {
                     ?thing bf:title %v FILTER(contains(%v, %s))
                 }
@@ -279,13 +284,13 @@
 
             <!-- the instancetitle can also contain a subtitle and a parttitle -->
             <index type="bf.subtitle">
-                ?thing bf:instanceTitle ?it .
-                ?it bf:subtitle %v FILTER(contains(%v, %s))
+                ?thing bf:instanceTitle %v_it .
+                %v_it bf:subtitle %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.parttitle">
-                ?thing bf:instanceTitle ?it .
-                ?it bf:partTitle %v FILTER(contains(%v, %s))
+                ?thing bf:instanceTitle %v_it .
+                %v_it bf:partTitle %v FILTER(contains(%v, %s))
             </index>
             <!-- We could also go to the works, and get those titles... -->
 
@@ -296,56 +301,56 @@
                 } UNION {
                     ?thing bf:titleStatement %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?thing ?titlerel ?it . <!-- any kind of link -->
-                    ?it a bf:Title <!-- to something that is a title -->
+                    ?thing ?titlerel %v_it . <!-- any kind of link -->
+                    %v_it a bf:Title <!-- to something that is a title -->
                     {
-                        ?it bf:titleValue %v FILTER(contains(%v, %s))
+                        %v_it bf:titleValue %v FILTER(contains(%v, %s))
                     } UNION {
-                        ?it bf:partTitle %v FILTER(contains(%v, %s))
+                        %v_it bf:partTitle %v FILTER(contains(%v, %s))
                     } UNION {
-                        ?it bf:subtitle %v FILTER(contains(%v, %s))
+                        %v_it bf:subtitle %v FILTER(contains(%v, %s))
                     }
                 }
             </index>
 
             <!-- Author indexes. Many instances don't have any, works do -->
             <index type="bf.creator">
-                ?thing bf:creator ?c .
-                ?c bf:label %v FILTER(contains(%v, %s))
+                ?thing bf:creator %v_cr .
+                %v_cr bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.workcreator">
-                ?thing bf:instanceOf ?work .
-                ?work bf:creator ?c .
-                ?c bf:label %v FILTER(contains(%v, %s))
+                ?thing bf:instanceOf %v_work .
+                %v_work bf:creator %v_cr .
+                %v_cr bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.workcontributor">
-                ?thing bf:instanceOf ?work .
-                ?work bf:contributor ?c .
-                ?c bf:label %v FILTER(contains(%v, %s))
+                ?thing bf:instanceOf %v_work .
+                %v_work bf:contributor %v_co .
+                %v_co bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.contributor">
-                ?thing bf:contributor ?c .
-                ?c bf:label %v FILTER(contains(%v, %s))
+                ?thing bf:contributor %v_co .
+                %v_co bf:label %v FILTER(contains(%v, %s))
             </index>
 
             <index type="bf.anyauthor">
                 {
-                    ?thing bf:creator ?c .
-                    ?c bf:label %v FILTER(contains(%v, %s))
+                    ?thing bf:creator %v_cr .
+                    %v_cr bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?thing bf:contributor ?c .
-                    ?c bf:label %v FILTER(contains(%v, %s))
+                    ?thing bf:contributor %v_co .
+                    %v_co bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?thing bf:instanceOf ?work .
-                    ?work bf:creator ?c .
-                    ?c bf:label %v FILTER(contains(%v, %s))
+                    ?thing bf:instanceOf %v_work .
+                    %v_work bf:creator %v_wcr .
+                    %v_wcr bf:label %v FILTER(contains(%v, %s))
                 } UNION {
-                    ?thing bf:instanceOf ?work .
-                    ?work bf:contributor ?c .
-                    ?c bf:label %v FILTER(contains(%v, %s))
+                    ?thing bf:instanceOf %v_work .
+                    %v_work bf:contributor %v_wco .
+                    %v_wco bf:label %v FILTER(contains(%v, %s))
                 }
             </index>
 
@@ -364,12 +369,12 @@
                         FILTER(isUri(%v) &amp;&amp; contains(str(%v), %s))
                 } UNION {
                     {
-                        ?thing bf:isbn10 ?isbn
+                        ?thing bf:isbn10 %v_isbn
                     } UNION {
-                        ?thing bf:isbn13 ?isbn
+                        ?thing bf:isbn13 %v_isbn
                     }
-                    ?isbn a bf:Identifier  .
-                    ?isbn bf:identifierValue  %v FILTER( %v = %s )
+                    %v_isbn a bf:Identifier  .
+                    %v_isbn bf:identifierValue  %v FILTER( %v = %s )
                 }
             </index>
 
