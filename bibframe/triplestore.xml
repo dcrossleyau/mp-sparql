@@ -41,16 +41,44 @@
 
         <!-- "smallindex" db that will be included in work and instance -->
         <!-- It provides the small indexes like bf.person, bf.place, etc -->
+        <!-- These match a person, etc, no matter what the relation to that -->
+        <!-- is, as long as there is a direct link -->
         <db path="smallindex">
-            <!-- Indexes for persons, organizations, etc -->
-            <!-- The person (etc) may be in any relation to the thing, -->
-            <!-- subject, creator, etc, as long as there is a direct link -->
             <index type="bf.person">
                 ?thing ?rel ?person .
                 ?person a bf:Person .
                 ?person bf:label %v FILTER(contains(%v, %s))
             </index>
-            <!-- TODO - make many more like the person above -->
+            <index type="bf.topic">
+                ?thing ?rel ?topic .
+                ?topic a bf:Topic .
+                ?topic bf:label %v FILTER(contains(%v, %s))
+            </index>
+            <index type="bf.place">
+                ?thing ?rel ?place .
+                ?place a bf:Place .
+                ?place bf:label %v FILTER(contains(%v, %s))
+            </index>
+            <index type="bf.agent">
+                ?thing ?rel ?person .
+                ?person a bf:Agent .
+                ?person bf:label %v FILTER(contains(%v, %s))
+            </index>
+            <index type="bf.meeting">
+                ?thing ?rel ?meeting .
+                ?meeting a bf:Meeting .
+                ?meeting bf:label %v FILTER(contains(%v, %s))
+            </index>
+            <index type="bf.organization">
+                ?thing ?rel ?organization .
+                ?organization a bf:Organization .
+                ?organization bf:label %v FILTER(contains(%v, %s))
+            </index>
+            <index type="bf.event">
+                ?thing ?rel ?event .
+                ?event a bf:Event .
+                ?event bf:label %v FILTER(contains(%v, %s))
+            </index>
         </db>
 
         <!-- work database -->
