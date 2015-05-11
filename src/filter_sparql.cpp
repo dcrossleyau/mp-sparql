@@ -506,7 +506,9 @@ Z_Records *yf::SPARQL::Session::fetch(
             {
                 if (n->type == XML_ELEMENT_NODE)
                 {
-                    if (!strcmp((const char *) n->name, "uri"))
+                    //if (!strcmp((const char *) n->name, "uri"))
+                    if (!strcmp((const char *) n->name, "uri") ||
+                        !strcmp((const char *) n->name, "bnode") )
                     {
                         uri = mp::xml::get_text(n->children);
 
