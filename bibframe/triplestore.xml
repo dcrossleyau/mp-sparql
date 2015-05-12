@@ -203,9 +203,9 @@
 
             <!-- Find the work that has a given Instance -->
             <index type="bf.instance">
-                %v_inst bf:instanceOf ?thing FILTER ( %v_inst = %u) 
+                %v_inst bf:instanceOf ?thing FILTER ( %v_inst = %u)
             </index>
-            
+
             <!-- Find all works that refer to the given uri -->
             <!-- useful after finding uris in the "small" bases -->
             <!-- direct references only -->
@@ -588,9 +588,10 @@
 
     <filter type="log">
         <message>http</message>
+<!--
         <category apdu="true"/>
+-->
     </filter>
-
     <filter type="http_client">
         <x-forwarded-for>true</x-forwarded-for>
     </filter>

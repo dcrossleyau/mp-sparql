@@ -549,7 +549,6 @@ Z_Records *yf::SPARQL::Session::fetch(
                         package.log("sparql", YLOG_LOG,
                             "fetch uri:%s", uri.c_str() );
                     }
-                    //yaz_log(YLOG_LOG, "query=%s", query.c_str());
                     error = invoke_sparql(package, query.c_str(),
                                           it->conf, w);
                 }
@@ -616,7 +615,7 @@ int yf::SPARQL::Session::invoke_sparql(mp::Package &package,
     gdu->u.HTTP_Request->content_buf = path;
     gdu->u.HTTP_Request->content_len = strlen(path);
 
-    yaz_log(YLOG_LOG, "sparql: HTTP request\n%s", sparql_query);
+    yaz_log(YLOG_DEBUG, "sparql: HTTP request\n%s", sparql_query);
 
     http_package.request() = gdu;
     http_package.move();
@@ -630,8 +629,14 @@ int yf::SPARQL::Session::invoke_sparql(mp::Package &package,
     }
     else if (gdu_resp->u.HTTP_Response->code != 200)
     {
+        Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
         wrbuf_printf(w, "sparql: HTTP error %d from backend",
-                     gdu_resp->u.HTTP_Response->code);
+                     resp->code);
+        package.log("sparql", YLOG_LOG,
+            "HTTP error %d from backend ",
+            resp->code );
+        package.log("sparql", YLOG_LOG,
+            "%.*s" , resp->content_len, resp->content_buf );
         return YAZ_BIB1_TEMPORARY_SYSTEM_ERROR;
     }
     Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
@@ -681,7 +686,7 @@ Z_APDU *yf::SPARQL::Session::search(mp::Package &package,
             result.doc = doc;
             result.conf = conf;
             fset->results.push_back(result);
-            yaz_log(YLOG_LOG, "saving sparql result xmldoc=%p", doc);
+            yaz_log(YLOG_DEBUG, "saving sparql result xmldoc=%p", doc);
 
             get_result(result.doc, &fset->hits, -1, 0);
             m_frontend_sets[req->resultSetName] = fset;
