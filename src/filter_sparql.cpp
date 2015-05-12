@@ -448,6 +448,7 @@ Z_Records *yf::SPARQL::Session::fetch(
     std::list<Result>::iterator it = fset->results.begin();
     const char *schema = 0;
     bool uri_lookup = false;
+    bool fetch_logged = false;
     if (esn && esn->which == Z_ElementSetNames_generic)
         schema = esn->u.generic;
 
@@ -536,7 +537,19 @@ Z_Records *yf::SPARQL::Session::fetch(
                                                       uri.c_str(), schema);
                 if (!error)
                 {
-                    yaz_log(YLOG_LOG, "query=%s", query.c_str());
+                    if (!fetch_logged)
+                    { // Log the fetch query only once
+                        package.log("sparql", YLOG_LOG,
+                            "fetch query: for %s \n%s",
+                            uri.c_str(), query.c_str() );
+                        fetch_logged = true;
+                    }
+                    else
+                    {
+                        package.log("sparql", YLOG_LOG,
+                            "fetch uri:%s", uri.c_str() );
+                    }
+                    //yaz_log(YLOG_LOG, "query=%s", query.c_str());
                     error = invoke_sparql(package, query.c_str(),
                                           it->conf, w);
                 }
@@ -635,6 +648,9 @@ Z_APDU *yf::SPARQL::Session::search(mp::Package &package,
     Z_SearchRequest *req = apdu_req->u.searchRequest;
     Z_APDU *apdu_res = 0;
     mp::wrbuf w;
+
+    package.log("sparql", YLOG_LOG,
+        "search query:\n%s", sparql_query );
 
     int error = invoke_sparql(package, sparql_query, conf, w);
     if (error)
