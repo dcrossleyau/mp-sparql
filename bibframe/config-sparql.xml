@@ -9,6 +9,10 @@
 	<port>@:9000</port>
 	<message>FN</message>
       </filter>
+      <filter type="sru_z3950"/>
+      <filter type="cql_rpn">
+        <conversion file="cql2pqf.txt"/>
+      </filter>
       <filter type="log">
         <message>log</message>
       </filter>
