@@ -17,7 +17,7 @@
 
             <!-- bf.uri is a simple way to get to a thing -->
             <index type="bf.uri">
-                ?thing  rdf:type ?any FILTER( ?thing  = %u )
+                ?thing  %v_rel %v_obj FILTER( ?thing  = %u )
             </index>
 
             <!-- bf.type is a simple way to search for types -->
@@ -201,6 +201,18 @@
                 ?thing bf:contentCategory %u
             </index>
 
+            <!-- Find the work that has a given Instance -->
+            <index type="bf.instance">
+                %v_inst bf:instanceOf ?thing FILTER ( %v_inst = %u) 
+            </index>
+            
+            <!-- Find all works that refer to the given uri -->
+            <!-- useful after finding uris in the "small" bases -->
+            <!-- direct references only -->
+            <index type="bf.ref">
+                ?thing %v_rel %u
+            </index>
+
             <!-- Present formats -->
             <!-- BF-L comes from the "thing" template -->
             <!-- BF-V expands all links, even to instances but not other works -->
@@ -376,7 +388,7 @@
                     %v_isbn bf:identifierValue  %v FILTER( %v = %s )
                 }
             </index>
-            
+
             <!-- lccn number, a simpler index for id numbers -->
             <index type="bf.lccn">
                 ?thing bf:lccn %v_lccn .
@@ -384,6 +396,16 @@
                 %v_lccn bf:identifierValue  %v FILTER( %v = %s )
             </index>
 
+            <!-- Find the instances of a given work -->
+            <index type="bf.work">
+                ?thing bf:instanceOf %u
+            </index>
+
+            <!-- Find all instances that refer to the given uri -->
+            <!-- useful after finding uris in the "small" bases -->
+            <index type="bf.ref">
+                ?thing %v_rel %u
+            </index>
 
             <!-- Present formats. BF-L comes from "thing" -->
             <!-- Full instance, with the related work too -->
