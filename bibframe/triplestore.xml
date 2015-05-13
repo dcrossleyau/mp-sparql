@@ -26,6 +26,14 @@
                 ?thing  a %t
             </index>
 
+            <!-- Find all nodes that refer to the given uri -->
+            <!-- useful after finding uris in the "small" bases -->
+            <!-- direct references only -->
+            <index type="bf.ref">
+                ?thing %v_rel %u
+            </index>
+
+
             <!-- The BF-L present format is the same for everything -->
             <!-- Each db is supposed to provide a dedicated BF-V present format -->
             <present type="BF-L">
@@ -48,7 +56,7 @@
         <!-- This way, we use a different variable for each index clause, and -->
         <!-- do not get into trouble if we have an AND between two of the same kind -->
         <db path="smallindex">
-            <index type="bf.personX">
+            <index type="bf.person">
                 ?thing ?rel %vx .
                 %vx a bf:Person .
                 %vx bf:label %v FILTER(contains(%v, %s))
@@ -204,13 +212,6 @@
             <!-- Find the work that has a given Instance -->
             <index type="bf.instance">
                 %v_inst bf:instanceOf ?thing FILTER ( %v_inst = %u)
-            </index>
-
-            <!-- Find all works that refer to the given uri -->
-            <!-- useful after finding uris in the "small" bases -->
-            <!-- direct references only -->
-            <index type="bf.ref">
-                ?thing %v_rel %u
             </index>
 
             <!-- Present formats -->
@@ -401,11 +402,6 @@
                 ?thing bf:instanceOf %u
             </index>
 
-            <!-- Find all instances that refer to the given uri -->
-            <!-- useful after finding uris in the "small" bases -->
-            <index type="bf.ref">
-                ?thing %v_rel %u
-            </index>
 
             <!-- Present formats. BF-L comes from "thing" -->
             <!-- Full instance, with the related work too -->
@@ -576,9 +572,6 @@
         <db path="node" schema="sparql-results" include="smallbody">
             <index type="any">
                 ?thing ?rel ?obj FILTER( str(?thing) = %s )
-            </index>
-            <index type="ref"> <!-- return any object that refers to %u-->
-                ?thing ?rel ?obj FILTER( str(?obj) = %s )
             </index>
         </db>
     </filter>
