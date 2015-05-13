@@ -577,10 +577,7 @@
             <index type="any">
                 ?thing ?rel ?obj FILTER( str(?thing) = %s )
             </index>
-        </db>
-        <!-- A way to see which triplets refers to a given uri. -->
-        <db path="ref" schema="sparql-results" include="smallbody">
-            <index type="any">
+            <index type="ref"> <!-- return any object that refers to %u-->
                 ?thing ?rel ?obj FILTER( str(?obj) = %s )
             </index>
         </db>
