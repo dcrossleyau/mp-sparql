@@ -677,16 +677,15 @@ Z_Records *yf::SPARQL::Session::explain_fetch(
         if ( idx >= fset->explaindblist.size() )
             break; 
         ConfPtr cp = fset->explaindblist[idx];
-        package.log("sparql", YLOG_LOG, "fetch explain %d:%s", idx, cp->db.c_str() );
         mp::wrbuf w;
-        wrbuf_puts(w,"<explain xmlns=\"http://explain.z3950.org/dtd/2.0/\">\n");
+        wrbuf_puts(w,"<info>\n");
         wrbuf_puts(w,"  <databaseInfo>\n");
         wrbuf_puts(w,"    <title>");
         wrbuf_xmlputs(w, cp->db.c_str());
         wrbuf_puts(w,"</title>\n");
         wrbuf_puts(w,"  </databaseInfo>\n");
         yaz_sparql_explain_indexes( cp->s, w, 2);
-        wrbuf_puts(w,"</explain>\n");
+        wrbuf_puts(w,"</info>\n");
 
         rec->u.databaseOrSurDiagnostics->records[i] = (Z_NamePlusRecord *)
             odr_malloc(odr, sizeof(Z_NamePlusRecord));
@@ -946,7 +945,7 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
 
             m_frontend_sets.erase(req->resultSetName);
             fset->db = db;
-            if ( db != "explain" )
+            if ( db != "info" )
             {
                 it = m_sparql->db_conf.begin();
                 for (; it != m_sparql->db_conf.end(); it++)
