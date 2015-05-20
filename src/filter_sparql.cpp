@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <yaz/srw.h>
 #include <yaz/diagbib1.h>
 #include <yaz/match_glob.h>
+#include <yaz/querytowrbuf.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
@@ -709,24 +710,32 @@ Z_Records *yf::SPARQL::Session::explain_fetch(
 Z_APDU *yf::SPARQL::Session::explain_search(mp::Package &package,
                            Z_APDU *apdu_req,
                            mp::odr &odr,
-                           const char *sparql_query,
+                           const char *explain_query,
                            FrontendSetPtr fset)
 {
     Z_SearchRequest *req = apdu_req->u.searchRequest;
     Z_APDU *apdu_res = 0;
     //mp::wrbuf w;
 
-    package.log("sparql", YLOG_LOG, "Explain search" );
+    package.log("sparql", YLOG_LOG, "Explain search '%s'", explain_query );
+    const char *term = explain_query + strlen(explain_query);
+    while ( term > explain_query && *term != ' ')
+        term--;
+    term++;
+    if ( ! isalpha( *term) )
+        term=""; // anything non-alpha is taken to mean all 
+                 // Empty string is seen here as two double quotes ""
+                 // so it returns all bases as well
     int numbases = 0;
-    //std::list<std::string> dblist;
     std::list<ConfPtr>::const_iterator it = m_sparql->db_conf.begin();
     m_frontend_sets[req->resultSetName] = fset;
     fset->explaindblist.clear();
     fset->explaindblist.reserve(m_sparql->db_conf.size());
 
     for (; it != m_sparql->db_conf.end(); it++)
-        if ((*it)->schema.length() > 0 )  // searchable db
-        {
+        if ( (*it)->schema.length() > 0  &&  // searchable db
+            (!*term || strcmp(term,(*it)->db.c_str())==0)  )
+        { // and want all, or found the matching one
             numbases++;
             package.log("sparql", YLOG_LOG, "Explain %d: '%s'",
                         numbases, (*it)->db.c_str() );
@@ -774,6 +783,7 @@ Z_APDU *yf::SPARQL::Session::explain_search(mp::Package &package,
 
     return apdu_res;
 }
+
 
 Z_APDU *yf::SPARQL::Session::search(mp::Package &package,
                                     Z_APDU *apdu_req,
@@ -982,9 +992,10 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
             else
             { // The magic "explain" base
                 yaz_log(YLOG_LOG,"About to call explain_search");
-                const char *qry = "query";
+                mp::wrbuf qry;
+                yaz_query_to_wrbuf(qry, req->query);
                 apdu_res = explain_search( package, apdu_req, odr,
-                                           qry, fset);
+                                           qry.c_str(), fset);
                   // TODO - Extract at least a term from the query, and
                   // do some filtering by that
                 yaz_log(YLOG_LOG,"Returned from explain_search");
