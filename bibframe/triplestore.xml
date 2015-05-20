@@ -575,6 +575,7 @@
                 ?thing ?rel ?obj FILTER( str(?thing) = %s )
             </index>
         </db>
+
     </filter>
 
     <filter type="log">

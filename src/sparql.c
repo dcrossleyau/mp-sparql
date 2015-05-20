@@ -540,6 +540,48 @@ int yaz_sparql_from_rpn_stream(yaz_sparql_t s,
     return errors ? -1 : r;
 }
 
+void yaz_sparql_explain_indexes( yaz_sparql_t s, WRBUF w, int indent)
+{
+    char indentspace[200]; // must be enough
+    assert(indent<200);
+    int i;
+    for (i=0; i < indent; i++)
+        indentspace[i] = ' ';
+    indentspace[indent] = '\0';
+
+    struct sparql_entry *e;
+    wrbuf_puts(w,indentspace);
+    wrbuf_puts(w,"<indexInfo>\n");
+
+    for (e = s->conf; e; e = e->next)
+    {
+        /*
+        wrbuf_puts(w,"    <FOO>");
+        wrbuf_xmlputs(w, e->pattern );
+        wrbuf_puts(w,"  : ");
+        wrbuf_xmlputs(w, e->value );
+        wrbuf_puts(w,"    </FOO>\n");
+        */
+        if ( strncmp(e->pattern, "index.", 6 ) == 0 )
+        {
+            wrbuf_puts(w,indentspace);
+            wrbuf_puts(w,"  <index>\n");
+            wrbuf_puts(w,indentspace);
+            wrbuf_puts(w,"    <title>");
+            wrbuf_xmlputs(w, e->pattern + 6);
+            wrbuf_puts(w,"</title>\n");
+            wrbuf_puts(w,indentspace);
+            wrbuf_puts(w,"    <map><name>");
+            wrbuf_xmlputs(w, e->pattern + 6);
+            wrbuf_puts(w,"</name></map>\n");
+            wrbuf_puts(w,indentspace);
+            wrbuf_puts(w,"  </index>\n");
+        }
+    }
+    wrbuf_puts(w,indentspace);
+    wrbuf_puts(w,"</indexInfo>\n");
+}
+
 /*
  * Local variables:
  * c-basic-offset: 4

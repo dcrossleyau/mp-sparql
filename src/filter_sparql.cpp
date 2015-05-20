@@ -88,6 +88,7 @@ namespace metaproxy_1 {
             Odr_int hits;
             std::string db;
             std::list<Result> results;
+            std::vector<ConfPtr> explaindblist;
         };
         class SPARQL::Session {
         public:
@@ -98,13 +99,25 @@ namespace metaproxy_1 {
                            Z_APDU *apdu_req,
                            mp::odr &odr,
                            const char *sparql_query,
-                           ConfPtr conf, FrontendSetPtr fset);
+                           ConfPtr conf,
+                           FrontendSetPtr fset);
+            Z_APDU *explain_search(mp::Package &package,
+                           Z_APDU *apdu_req,
+                           mp::odr &odr,
+                           const char *sparql_query,
+                           FrontendSetPtr fset);
             int invoke_sparql(mp::Package &package,
                               const char *sparql_query,
                               ConfPtr conf,
                               WRBUF w);
-
             Z_Records *fetch(
+                Package &package,
+                FrontendSetPtr fset,
+                ODR odr, Odr_oid *preferredRecordSyntax,
+                Z_ElementSetNames *esn,
+                int start, int number, int &error_code, std::string &addinfo,
+                int *number_returned, int *next_position);
+            Z_Records *explain_fetch(
                 Package &package,
                 FrontendSetPtr fset,
                 ODR odr, Odr_oid *preferredRecordSyntax,
@@ -507,7 +520,6 @@ Z_Records *yf::SPARQL::Session::fetch(
             {
                 if (n->type == XML_ELEMENT_NODE)
                 {
-                    //if (!strcmp((const char *) n->name, "uri"))
                     if (!strcmp((const char *) n->name, "uri") ||
                         !strcmp((const char *) n->name, "bnode") )
                     {
@@ -642,6 +654,138 @@ int yf::SPARQL::Session::invoke_sparql(mp::Package &package,
     Z_HTTP_Response *resp = gdu_resp->u.HTTP_Response;
     wrbuf_write(w, resp->content_buf, resp->content_len);
     return 0;
+}
+
+Z_Records *yf::SPARQL::Session::explain_fetch(
+    Package &package,
+    FrontendSetPtr fset,
+    ODR odr, Odr_oid *preferredRecordSyntax,
+    Z_ElementSetNames *esn,
+    int start, int number, int &error_code, std::string &addinfo,
+    int *number_returned, int *next_position)
+{
+    Z_Records *rec = (Z_Records *) odr_malloc(odr, sizeof(Z_Records));
+    rec->which = Z_Records_DBOSD;
+    rec->u.databaseOrSurDiagnostics = (Z_NamePlusRecordList *)
+        odr_malloc(odr, sizeof(Z_NamePlusRecordList));
+    rec->u.databaseOrSurDiagnostics->records = (Z_NamePlusRecord **)
+        odr_malloc(odr, sizeof(Z_NamePlusRecord *) * number);
+    int i;
+    for (i = 0; i < number; i++)
+    {
+        int idx = start + i - 1;
+        ConfPtr cp = fset->explaindblist[ idx];
+        package.log("sparql", YLOG_LOG, "fetch explain %d:%s", idx, cp->db.c_str() );
+        mp::wrbuf w;
+        wrbuf_puts(w,"<explain xmlns=\"http://explain.z3950.org/dtd/2.0/\">\n");
+        wrbuf_puts(w,"  <databaseInfo>\n");
+        wrbuf_puts(w,"    <title>");
+        wrbuf_xmlputs(w, cp->db.c_str());
+        wrbuf_puts(w,"</title>\n");
+        wrbuf_puts(w,"  </databaseInfo>\n");
+        yaz_sparql_explain_indexes( cp->s, w, 2);
+        wrbuf_puts(w,"</explain>\n");
+
+        rec->u.databaseOrSurDiagnostics->records[i] = (Z_NamePlusRecord *)
+            odr_malloc(odr, sizeof(Z_NamePlusRecord));
+        Z_NamePlusRecord *npr = rec->u.databaseOrSurDiagnostics->records[i];
+        npr->databaseName = odr_strdup(odr, fset->db.c_str());
+        npr->which = Z_NamePlusRecord_databaseRecord;
+        npr->u.databaseRecord =
+            z_ext_record_xml(odr, w.buf(), w.len() );
+    }
+    rec->u.databaseOrSurDiagnostics->num_records = i;
+    *number_returned = i;
+    if (start + number > fset->hits)
+        *next_position = 0;
+    else
+        *next_position = start + number;
+    return rec;
+}
+
+
+
+Z_APDU *yf::SPARQL::Session::explain_search(mp::Package &package,
+                           Z_APDU *apdu_req,
+                           mp::odr &odr,
+                           const char *sparql_query,
+                           FrontendSetPtr fset)
+{
+    Z_SearchRequest *req = apdu_req->u.searchRequest;
+    Z_APDU *apdu_res = 0;
+    //mp::wrbuf w;
+
+    package.log("sparql", YLOG_LOG, "Explain search" );
+    int numbases = 0;
+    //std::list<std::string> dblist;
+    std::list<ConfPtr>::const_iterator it = m_sparql->db_conf.begin();
+    m_frontend_sets[req->resultSetName] = fset;
+    fset->explaindblist.clear();
+    fset->explaindblist.reserve(m_sparql->db_conf.size());
+
+    for (; it != m_sparql->db_conf.end(); it++)
+        if ((*it)->schema.length() > 0 )  // searchable db
+        {
+            numbases++;
+            package.log("sparql", YLOG_LOG, "Explain %d: '%s'",
+                        numbases, (*it)->db.c_str() );
+            fset->explaindblist.push_back(*it);
+/*
+            //yf::SPARQL::Result res;
+            //res.conf = *it;
+            std::string z =
+              "<explain xmlns='http://explain.z3950.org/dtd/2.0/'>"
+                "<databaseInfo>"
+                  "<title>" +
+                    (*it)->db +
+                  "</title>"
+                "</databaseInfo>"
+              "</explain>";
+            //res.doc = xmlParseMemory(z.c_str(), z.size());
+            dblist.push_back(z);
+*/
+        }
+    int number_returned = 0;
+    int next_position = 0;
+    Z_Records *records = 0;
+    int error_code = 0;
+    std::string addinfo;
+
+    Odr_int number = 0;
+    const char *element_set_name = 0;
+    mp::util::piggyback_sr(req, numbases, number, &element_set_name);
+    if (number)
+    {
+        Z_ElementSetNames *esn;
+
+        if (number > *req->smallSetUpperBound)
+            esn = req->mediumSetElementSetNames;
+        else
+            esn = req->smallSetElementSetNames;
+        records = explain_fetch(package, fset,
+                        odr, req->preferredRecordSyntax, esn,
+                        1, number,
+                        error_code, addinfo,
+                        &number_returned,
+                        &next_position);
+    }
+
+    if (error_code)
+    {
+        apdu_res = odr.create_searchResponse(
+                apdu_req, error_code, addinfo.c_str());
+    }
+    else
+    {
+        apdu_res = odr.create_searchResponse(apdu_req, 0, 0);
+        Z_SearchResponse *resp = apdu_res->u.searchResponse;
+        *resp->resultCount = numbases;
+        *resp->numberOfRecordsReturned = number_returned;
+        *resp->nextResultSetPosition = next_position;
+        resp->records = records;
+    }
+
+    return apdu_res;
 }
 
 Z_APDU *yf::SPARQL::Session::search(mp::Package &package,
@@ -814,36 +958,49 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
 
             m_frontend_sets.erase(req->resultSetName);
             fset->db = db;
-            it = m_sparql->db_conf.begin();
-            for (; it != m_sparql->db_conf.end(); it++)
-                if ((*it)->schema.length() > 0
-                    && yaz_match_glob((*it)->db.c_str(), db.c_str()))
-                {
-                    mp::wrbuf addinfo_wr;
-                    mp::wrbuf sparql_wr;
-                    int error =
-                        yaz_sparql_from_rpn_wrbuf((*it)->s,
-                                                  addinfo_wr, sparql_wr,
-                                                  req->query->u.type_1);
-                    if (error)
-                    {
-                        apdu_res = odr.create_searchResponse(
-                            apdu_req, error,
-                            addinfo_wr.len() ? addinfo_wr.c_str() : 0);
-                    }
-                    else
-                    {
-                        Z_APDU *apdu_1 = search(package, apdu_req, odr,
-                                                sparql_wr.c_str(), *it,
-                                                fset);
-                        if (!apdu_res)
-                            apdu_res = apdu_1;
-                    }
-                }
-            if (apdu_res == 0)
+            if ( db != "explain" )
             {
-                apdu_res = odr.create_searchResponse(
-                    apdu_req, YAZ_BIB1_DATABASE_DOES_NOT_EXIST, db.c_str());
+                it = m_sparql->db_conf.begin();
+                for (; it != m_sparql->db_conf.end(); it++)
+                    if ((*it)->schema.length() > 0
+                        && yaz_match_glob((*it)->db.c_str(), db.c_str()))
+                    {
+                        mp::wrbuf addinfo_wr;
+                        mp::wrbuf sparql_wr;
+                        int error =
+                            yaz_sparql_from_rpn_wrbuf((*it)->s,
+                                                    addinfo_wr, sparql_wr,
+                                                    req->query->u.type_1);
+                        if (error)
+                        {
+                            apdu_res = odr.create_searchResponse(
+                                apdu_req, error,
+                                addinfo_wr.len() ? addinfo_wr.c_str() : 0);
+                        }
+                        else
+                        {
+                            Z_APDU *apdu_1 = search(package, apdu_req, odr,
+                                                    sparql_wr.c_str(), *it,
+                                                    fset);
+                            if (!apdu_res)
+                                apdu_res = apdu_1;
+                        }
+                    }
+                if (apdu_res == 0)
+                {
+                    apdu_res = odr.create_searchResponse(
+                        apdu_req, YAZ_BIB1_DATABASE_DOES_NOT_EXIST, db.c_str());
+                }
+            }
+            else
+            { // The magic "explain" base
+                yaz_log(YLOG_LOG,"About to call explain_search");
+                const char *qry = "query";
+                apdu_res = explain_search( package, apdu_req, odr,
+                                           qry, fset);
+                  // TODO - Extract at least a term from the query, and
+                  // do some filtering by that
+                yaz_log(YLOG_LOG,"Returned from explain_search");
             }
         }
     }
@@ -881,14 +1038,25 @@ void yf::SPARQL::Session::handle_z(mp::Package &package, Z_APDU *apdu_req)
                 return;
             }
         }
-        Z_Records *records = fetch(
-            package,
-            fset_it->second,
-            odr, req->preferredRecordSyntax, esn,
-            *req->resultSetStartPoint, *req->numberOfRecordsRequested,
-            error_code, addinfo,
-            &number_returned,
-            &next_position);
+        Z_Records *records;
+        if ( fset_it->second->explaindblist.size() > 0 )
+            records = explain_fetch(
+                package,
+                fset_it->second,
+                odr, req->preferredRecordSyntax, esn,
+                *req->resultSetStartPoint, *req->numberOfRecordsRequested,
+                error_code, addinfo,
+                &number_returned,
+                &next_position);
+        else
+            records = fetch(
+                package,
+                fset_it->second,
+                odr, req->preferredRecordSyntax, esn,
+                *req->resultSetStartPoint, *req->numberOfRecordsRequested,
+                error_code, addinfo,
+                &number_returned,
+                &next_position);
         if (error_code)
         {
             apdu_res =
