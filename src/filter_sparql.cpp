@@ -673,8 +673,10 @@ Z_Records *yf::SPARQL::Session::explain_fetch(
     int i;
     for (i = 0; i < number; i++)
     {
-        int idx = start + i - 1;
-        ConfPtr cp = fset->explaindblist[ idx];
+        unsigned int idx = start + i - 1;
+        if ( idx >= fset->explaindblist.size() )
+            break; 
+        ConfPtr cp = fset->explaindblist[idx];
         package.log("sparql", YLOG_LOG, "fetch explain %d:%s", idx, cp->db.c_str() );
         mp::wrbuf w;
         wrbuf_puts(w,"<explain xmlns=\"http://explain.z3950.org/dtd/2.0/\">\n");
@@ -696,7 +698,7 @@ Z_Records *yf::SPARQL::Session::explain_fetch(
     }
     rec->u.databaseOrSurDiagnostics->num_records = i;
     *number_returned = i;
-    if (start + number > fset->hits)
+    if (start + number > (int)fset->explaindblist.size())
         *next_position = 0;
     else
         *next_position = start + number;
@@ -730,20 +732,6 @@ Z_APDU *yf::SPARQL::Session::explain_search(mp::Package &package,
             package.log("sparql", YLOG_LOG, "Explain %d: '%s'",
                         numbases, (*it)->db.c_str() );
             fset->explaindblist.push_back(*it);
-/*
-            //yf::SPARQL::Result res;
-            //res.conf = *it;
-            std::string z =
-              "<explain xmlns='http://explain.z3950.org/dtd/2.0/'>"
-                "<databaseInfo>"
-                  "<title>" +
-                    (*it)->db +
-                  "</title>"
-                "</databaseInfo>"
-              "</explain>";
-            //res.doc = xmlParseMemory(z.c_str(), z.size());
-            dblist.push_back(z);
-*/
         }
     int number_returned = 0;
     int next_position = 0;
