@@ -1,0 +1,177 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"
+[
+     <!ENTITY % local SYSTEM "local.ent">
+     %local;
+     <!ENTITY manref SYSTEM "manref.xml">
+     <!ENTITY gpl2 SYSTEM "gpl-2.0.xml">
+     <!ENTITY % idcommon SYSTEM "common/common.ent">
+     %idcommon;
+]>
+<book>
+ <bookinfo>
+  <title>MP-SPARQL - User's Guide and Reference</title>
+  <authorgroup>
+   <author>
+    <firstname>Adam</firstname><surname>Dickmeiss</surname>
+   </author>
+  </authorgroup>
+  <releaseinfo>&version;</releaseinfo>
+  <copyright>
+   <year>2014-2015</year>
+   <holder>Index Data</holder>
+  </copyright>
+  <abstract>
+   <simpara>
+    This manual is part of MP-SPARQL version &version;.
+    </simpara>
+   <simpara>
+    MP-XQuery is a Metaproxy module that converts Type-1/RPN Queries
+    to SPARQL.
+   </simpara>
+   <simpara>
+    MP-SPARQL is covered by the GNU General Public License version 2.
+   </simpara>
+   <simpara>
+    <inlinemediaobject>
+     <imageobject>
+      <imagedata fileref="common/id.png" format="PNG"/>
+     </imageobject>
+     <imageobject>
+      <imagedata fileref="common/id.eps" format="EPS"/>
+     </imageobject>
+    </inlinemediaobject>
+   </simpara>
+  </abstract>
+ </bookinfo>
+ <chapter id="introduction">
+  <title>Introduction</title>
+  <para>
+   MP-SPARQL is a <ulink url="&url.metaproxy;">Metaproxy</ulink> module
+   that converts Type-1/RPN queries to SPARQL.
+  </para>
+ </chapter>
+ <chapter id="installation">
+  <title>Installation</title>
+  <para>
+   MP-SPARQL is available as packages for CentOS/RHEL 5+6 and most
+   recent Ubuntu/Debian versions. For other systems, the module must be build
+   from source.
+  </para>
+  <sect1 id="installation.packages">
+   <title>Installing packages</title>
+   <para>
+    You need to enable the relevant software repositories.
+    For setting up refer to one of:
+    <ulink
+	url="http://ftp.indexdata.dk/pub/mp-sparql/redhat/centos/5.5/README">CentOS 5</ulink>,
+    <ulink
+	url="http://ftp.indexdata.dk/pub/mp-sparql/redhat/centos/6/README">CentOS 6</ulink>
+    ,
+    <ulink
+	url="http://ftp.indexdata.dk/pub/mp-sparql/ubuntu/README">Ubuntu</ulink>
+    and
+    <ulink
+	url="http://ftp.indexdata.dk/pub/mp-sparql/debian/README">Debian</ulink>
+   </para>
+   <para>
+    The package is called <literal>mp-sparql</literal> on RHEL/Debian systems.
+    Install that package and you are ready to use filter "sparql" in your
+    setup.
+   </para>
+  </sect1>
+  <sect1 id="installation.source">
+   <title>Installing from source</title>
+   <para>
+    To build from source, you need metaproxy development
+    packages. Metaproxy can be installed as follows:
+    <screen>
+     ./configure
+     make
+     sudo make install
+    </screen>
+    But consult the Metaproxy documentation for requirements and
+    options.
+   </para>
+   <para>
+    We are now ready to build the MP-SPARQL module with:
+    <screen>
+     cd mp-sparql-version
+     make MP_CONFIG=/usr/local/bin/mp-config
+    </screen>
+    Adjust <literal>MP_CONFIG</literal> value
+    above for the correct location of installed
+    Metaproxy's mp-config. <literal>MP_CONFIG</literal> can be omitted
+    if Metaproxy was installed in the system <filename>PATH</filename>.
+   </para>
+   <para>
+    You can now install the <filename>metaproxy_filter_sparql.so</filename>
+    in a directory searched by Metaproxy daemon.
+    Specifically, that's the directories
+    given by the <literal>dlpath</literal> configuration.
+   </para>
+   <para>
+    If dlpath includes <filename>/usr/lib/metaproxy6/modules</filename>,
+    the module can be installed with:
+    <screen>
+     cp src/metaproxy_filter_sparql.so /usr/lib/metaproxy6/modules
+    </screen>
+   </para>
+   <note>
+    <para>
+     For RHEL/CentOS systems on 64-bit architectures, the correct paths is:
+     <filename>/usr/lib64/metaproxy6/modules</filename>.
+    </para>
+   </note>
+  </sect1>
+ </chapter>
+ <reference id="reference">
+  <title>Reference</title>
+   <partintro id="reference-introduction">
+    <para>
+     The material in this chapter is drawn directly from the individual
+     manual entries.
+    </para>
+   </partintro>
+   &manref;
+ </reference>
+
+ <appendix id="license">
+  <title>License</title>
+  <para>
+   Copyright (C) 2014-2015 Index Data
+  </para>
+
+  <para>
+   Metaproxy is free software; you can redistribute it and/or modify it under
+   the terms of the GNU General Public License as published by the Free
+   Software Foundation; either version 2, or (at your option) any later
+   version.
+   </para>
+
+  <para>
+   Metaproxy is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+   for more details.
+  </para>
+
+  <para>
+   You should have received a copy of the GNU General Public License
+   along with Metaproxy; see the file LICENSE.  If not, write to the
+   Free Software Foundation,
+   51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+   </para>
+
+ </appendix>
+
+ &gpl2;
+</book>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: nxml
+nxml-child-indent: 1
+End:
+-->
