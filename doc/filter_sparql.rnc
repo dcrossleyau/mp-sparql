@@ -3,7 +3,7 @@
 namespace mp = "http://indexdata.com/metaproxy"
 
 filter_sparql =
-  attribute type { "xquery" },
+  attribute type { "sparql" },
   attribute id { xsd:NCName }?,
   attribute name { xsd:NCName }?,
   element mp:defaults {
@@ -17,6 +17,10 @@ filter_sparql =
     element mp:field { xsd:string }*,
     element mp:criteria { xsd:string }*,
     element mp:index {
+      attribute type { xsd:string },
+      xsd:string
+    }*,
+    element mp:present {
       attribute type { xsd:string },
       xsd:string
     }*,

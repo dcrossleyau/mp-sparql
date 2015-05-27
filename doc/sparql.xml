@@ -70,10 +70,21 @@
        Section used to declare RPN use attribute strings (indexes) and map
        them to BIBFRAME graph patterns.
        Items in this section are expanded during RPN query processing and
-       placeholders (%s, %d) are substituted with query terms.
+       placeholders (<literal>%s</literal>, <literal>%d</literal>,
+       <literal>%t</literal>) are substituted with query terms.
        To map a given CQL index (e.g the default keyword index) into
        multiple entity properties, SPARQL constructs like
        `OPTIONAL` or `UNION` could be used.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term>&lt;present type="attribute"/&gt;</term>
+     <listitem>
+      <para>
+       Section used to declare retrieval for a given element-set 
+       (SRU schema). The CDATA is SPARQL where <literal>%u</literal> holds
+       the URI of the record. This can be used to construct the resulting
+       record.
       </para>
      </listitem>
     </varlistentry>
