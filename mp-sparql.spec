@@ -6,13 +6,13 @@ Release: 1.indexdata
 BuildRequires: gcc gcc-c++ pkgconfig
 BuildRequires: docbook-style-xsl
 BuildRequires: libmetaproxy6-devel >= 1.4.0
-License: proprietary
+License: GPL
 Group: Applications/Internet
 Vendor: Index Data ApS <info@indexdata.dk>
 Source: mp-sparql-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Packager: Adam Dickmeiss <adam@indexdata.dk>
-URL: http://www.indexdata.com/metaproxy
+URL: http://www.indexdata.com/mp-sparql
 
 Requires: metaproxy6
 Requires: libmetaproxy6
