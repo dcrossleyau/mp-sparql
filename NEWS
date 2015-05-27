@@ -1,3 +1,10 @@
+--- 0.6 2015/05/27
+
+New configuration element <present> which allows retrieval of records
+given a URI.
+
+Add more indexes to Bibframe demo.
+
 --- 0.5 2015/04/29
 
 Fix make check fails in src MPSPARQL-14
