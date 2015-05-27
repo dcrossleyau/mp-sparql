@@ -52,7 +52,7 @@
   <title>Introduction</title>
   <para>
    MP-SPARQL is a <ulink url="&url.metaproxy;">Metaproxy</ulink> module
-   that converts Type-1/RPN queries to SPARQL.
+   that converts Type-1/RPN queries to <ulink url="http://www.w3.org/TR/rdf-sparql-query/">SPARQL</ulink>.
   </para>
  </chapter>
  <chapter id="installation">
