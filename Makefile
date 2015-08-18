@@ -20,9 +20,9 @@ install:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/bibframe
 	cp bibframe/cql2pqf.txt bibframe/*.xml $(DESTDIR)$(pkgdatadir)/bibframe
 	if test -d /usr/lib64 ; then \
-		sed 's@<dlpath.*dlpath>@<dlpath>/usr/lib64/metaproxy6/modules</dlpath>@' <bibframe/config-sparql.xml >$(DESTDIR)$(pkgdatadir)/bibframe/config-sparql.xml; \
+		sed "s@<dlpath.*dlpath>@<dlpath>$(prefix)/lib64/metaproxy6/modules</dlpath>@" <bibframe/config-sparql.xml >$(DESTDIR)$(pkgdatadir)/bibframe/config-sparql.xml; \
 	else \
-		sed 's@<dlpath.*dlpath>@<dlpath>/usr/lib/metaproxy6/modules</dlpath>@' <bibframe/config-sparql.xml >$(DESTDIR)$(pkgdatadir)/bibframe/config-sparql.xml; \
+		sed "s@<dlpath.*dlpath>@<dlpath>$(prefix)/lib/metaproxy6/modules</dlpath>@" <bibframe/config-sparql.xml >$(DESTDIR)$(pkgdatadir)/bibframe/config-sparql.xml; \
 	fi
 	for d in $(SUBDIRS); do \
 		$(MAKE) -C $$d $@; \
