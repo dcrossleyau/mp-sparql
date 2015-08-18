@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<filters xmlns="http://indexdata.com/metaproxy" version="1.0">
+   <filter type="sru_z3950"/>
+   <filter type="cql_rpn">
+     <conversion file="/usr/share/mp-sparql/bibframe/cql2pqf.txt"/>
+   </filter>
+   <include src="triplestore.xml"/>
+</filters>
+
