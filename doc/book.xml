@@ -138,7 +138,7 @@
     </para>
    </note>
   </sect1>
-  <sect1>
+  <sect1 id="configuration">
    <title>Configuration</title>
    <para>
     If you have installed mp-sparql as a package or have executed
@@ -186,7 +186,7 @@
     <screen>
      cp /usr/share/mp-sparql/bibframe/filter-sparql.xml /etc/metaproxy/filters-available
      cp /usr/share/mp-sparql/bibframe/triplestore.xml /etc/metaproxy
-     sudo vi /etc/metaproxy/triplestore.xml
+     vi /etc/metaproxy/triplestore.xml
      ln -s ../filters-available/filter-sparql.xml /etc/metaproxy/filters-enabled
      service metaproxy restart
     </screen>
@@ -215,6 +215,50 @@
      Instead copy the files away from there if you need to modify them.
     </para>
    </note>
+  </sect1>
+  <sect1 id="using">
+   <title>Using the service</title>
+   <para>
+    Either way, unless you have adjusted the metaproxy configuration,
+    Metaproxy can be reached on port 9000. Example using yaz-client and
+    PQF/Type-1:
+    <screen><![CDATA[
+adam@tuna:~$ yaz-client localhost:9000/work
+Connecting...OK.
+Sent initrequest.
+Connection accepted by v3 target.
+ID     : 81
+Name   : sparql
+Version: 1.9.0/5.14.6 87faebe8ef5cab8f6df86f387e8b919b7b9897a8
+Options: search present namedResultSets
+Elapsed: 0.000961
+Z> f @attr 1=bf.anytitle water
+Sent searchRequest.
+Received SearchResponse.
+Search was a success.
+Number of hits: 1, setno 1
+records returned: 0
+Elapsed: 0.279441
+Z> s
+Sent presentRequest (1+1).
+Records: 1
+[work]Record type: XML
+<?xml version="1.0" encoding="utf-8" ?>
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:ns2="http://bibframe.org/vocab/" >
+  <rdf:Description rdf:about="http://bibframe.org/resources/sample-lc-2/15513351">
+  ...
+  </rdf:Description>
+</rdf:RDF>nextResultSetPosition = 0
+Elapsed: 0.256142
+]]></screen>
+   </para>
+   <para>
+   Example using SRU:
+   <ulink url="http://localhost:9000/work?query=bf.anytitle%3Dwater&amp;maximumRecords=1"/>
+   </para>
   </sect1>
  </chapter>
  <reference id="reference">
@@ -253,7 +297,7 @@
    along with Metaproxy; see the file LICENSE.  If not, write to the
    Free Software Foundation,
    51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-   </para>
+  </para>
 
  </appendix>
 
