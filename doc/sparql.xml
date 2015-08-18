@@ -47,7 +47,7 @@
     <varlistentry><term>&lt;form/&gt;</term>
      <listitem>
       <para>
-       SPARQL Query formulation selection. SHould start with one of the
+       SPARQL Query formulation selection. Should start with one of the
        query forms: SELECT or CONSTRUCT.
       </para>
      </listitem>
