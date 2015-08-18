@@ -138,6 +138,84 @@
     </para>
    </note>
   </sect1>
+  <sect1>
+   <title>Configuration</title>
+   <para>
+    If you have installed mp-sparql as a package or have executed
+    <literal>make install</literal> from source, sample configuration
+    can be found in <filename>/usr/share/mp-sparql/bibframe</filename> or
+    <filename>/usr/local/share/mp-sparql/bibframe</filename>. In the
+    the following /usr/share prefix assumed. Adjust accordingly.
+    The directory contains these files:
+    <variablelist>
+     <varlistentry>
+      <term><filename>triplestore.xml</filename></term>
+      <listitem>
+       <para>
+	A mature PQF to SPARQL configuration illustrating a lot of the
+	configuration facilities that are described in the manual
+	page of <xref linkend="sparql"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><filename>config-sparql.xml</filename></term>
+      <listitem>
+       <para>
+	A full metaproxy configuration file that includes
+	<filename>triplestore.xml</filename> cofiguration for the
+	mp-sparql filter, enables SRU and CQL to PQF conversion.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><filename>filter-sparql.xml</filename></term>
+      <listitem>
+       <para>
+	A partial metaproxy configuration suitable to be enabled in
+	<filename>/etc/metaproxy/filters-enabled</filename>.
+	This includes <filename>triplestore.xml</filename> as well.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   <para>
+    If you want to use the package layout and modular configuration we
+    suggest you use filter-sparql.xml and perform something along the lines of:
+    <screen>
+     cp /usr/share/mp-sparql/bibframe/filter-sparql.xml /etc/metaproxy/filters-available
+     cp /usr/share/mp-sparql/bibframe/triplestore.xml /etc/metaproxy
+     sudo vi /etc/metaproxy/triplestore.xml
+     ln -s ../filters-available/filter-sparql.xml /etc/metaproxy/filters-enabled
+     service metaproxy restart
+    </screen>
+    A copy of triplestore.xml is made. Adjust the
+    <literal>&lt;defaults uri=.. </literal> value to the URI of your
+    triplestore.
+   </para>
+   <para>
+    If you want to create your own top-level configuration, you can copy
+    <filename>config-sparql.xml</filename> to any location you like and
+    run metaproxy with that. Something like this:
+    <screen>
+     mkdir /etc/myconfig
+     cp /usr/share/mp-sparql/bibframe/* /etc/myconfig
+     sudo vi /etc/myconfig/triplestore.xml
+     metaproxy -c /etc/myconfig/config-sparql.xml
+    </screen>
+    Again, a copy of triplestore.xml is made. Adjust the
+    <literal>&lt;defaults uri=.. </literal> value to the URI of your
+    triplestore.
+   </para>
+   <note>
+    <para>
+     Do not edit files in <filename>/usr/share/mp-sparql/bibframe</filename>.
+     They are only samples and will be overwritten by a package update.
+     Instead copy the files away from there if you need to modify them.
+    </para>
+   </note>
+  </sect1>
  </chapter>
  <reference id="reference">
   <title>Reference</title>
