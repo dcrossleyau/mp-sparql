@@ -1,5 +1,38 @@
 <?xml version="1.0"?>
 
+<!-- 
+Mp-sparql example configuration
+
+This config file snippet is typically included from the main Metaproxy
+configuration. It sets up a simple chain that consists of the sparql 
+filter to translate the queries etc, and a http_client filter that is used
+to do the actual communication to the triple store.
+
+This config provides quite many databases, one for each major type of
+records. The most important are "work" and "instance". These have a great
+number of indexes.  There is a number of "small" databases like "person",
+"meeting" and "topic". These have one main index, named after the database
+name, for example "bf.person".  The "node" database can search for any node
+in the database, and "info" returns simple information about available
+databases.
+
+There are other databases defined in this file, but they are only used 
+internally, to be included in the real database definitions. All real,
+searchable databases have
+  schema="sparql-results"
+in the db tag, whereas those for include use only do not.
+
+All databases support the BF-L ("Link") schema, which returns the triples 
+of the nodes found in the database, without expanding anything. Most of them 
+also support BF-V ("Verbose") schema that expands those links to return a set
+of triples that is more or less self contained. A work, its instances, titles
+for all of them, authors, and their names, etc.
+
+
+
+
+-->
+
 <filters  xmlns="http://indexdata.com/metaproxy">
     <filter type="sparql">
 
