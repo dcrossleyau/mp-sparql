@@ -86,6 +86,14 @@
     Install that package and you are ready to use filter "sparql" in your
     setup.
    </para>
+   <para>
+    mp-sparql depends on a number of packages created by Index Data and
+    system-provided ones, such as Libxml2. For external software Zorba, no
+    system package exist so Index Data has packaged that separately. This
+    package is called <literal>idzorba</literal>. All these dependences should
+    be automatically installed when the Index Data software repository is
+    set up.
+   </para>
   </sect1>
   <sect1 id="installation.source">
    <title>Installing from source</title>
@@ -97,8 +105,7 @@
      make
      sudo make install
     </screen>
-    But consult the Metaproxy documentation for requirements and
-    options.
+    Refer to the Metaproxy documentation for requirements and options.
    </para>
    <para>
     We are now ready to build the MP-SPARQL module with:
