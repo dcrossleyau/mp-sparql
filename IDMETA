@@ -2,4 +2,4 @@ NAME=mp-sparql
 DEBIAN_DIST="jessie wheezy"
 UBUNTU_DIST="vivid utopic trusty precise"
 CENTOS_DIST="centos5 centos6 centos7"
-VERSION=0.6
+VERSION=0.7

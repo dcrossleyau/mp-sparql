@@ -1,3 +1,14 @@
+--- 0.7 2015/08/18
+
+Add sections on configuratrion and how to access the sample Bibframe
+service.
+
+Fix incorrect RDF namespace URI MPSPARQL-25
+The declarations are not necessary so they are simply removed.
+
+Install new sample config filter-sparql.xml which can be used in the
+filters-available / filters-enabled mechanism of Metaproxy.
+
 --- 0.6 2015/05/27
 
 New configuration element <present> which allows retrieval of records
