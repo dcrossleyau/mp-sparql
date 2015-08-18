@@ -118,7 +118,6 @@
     <db path="Default"
         uri="http://bibframe.indexdata.com/sparql/"
         schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>SELECT ?work ?wtitle</form>
       <criteria>?work a bf:Work</criteria>
@@ -140,7 +139,6 @@
    the same filter section as the "Default" db above.
    <screen><![CDATA[
     <db path="work" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>SELECT
               ?work
@@ -197,7 +195,6 @@
     Configuration for database "works". This uses CONSTRUCT to produce rdf.
    <screen><![CDATA[
     <db path="works" schema="rdf">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>CONSTRUCT {
           ?work bf:title ?wtitle .
@@ -230,7 +227,6 @@
     two formats, we get four rows. The DISTINCT in the SELECT
    <screen><![CDATA[
     <db path="instance" schema="sparql-results">
-      <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
       <prefix>bf: http://bibframe.org/vocab/</prefix>
       <form>SELECT DISTINCT ?instance ?title ?format</form>
       <criteria>?instance a bf:Instance</criteria>

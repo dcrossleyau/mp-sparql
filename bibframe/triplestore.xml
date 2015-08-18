@@ -42,7 +42,6 @@ for all of them, authors, and their names, etc.
 
         <!-- "thing" database that will be included all real databases -->
         <db path="thing">  <!-- no schema, so it is not directly searchable -->
-            <prefix>rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns</prefix>
             <prefix>bf: http://bibframe.org/vocab/</prefix>
             <form>SELECT DISTINCT ?thing </form>
 
