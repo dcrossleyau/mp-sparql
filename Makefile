@@ -18,7 +18,7 @@ clean check: $(CDEP)
 
 install:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/bibframe
-	cp bibframe/*.xml $(DESTDIR)$(pkgdatadir)/bibframe
+	cp bibframe/cql2pqf.txt bibframe/*.xml $(DESTDIR)$(pkgdatadir)/bibframe
 	for d in $(SUBDIRS); do \
 		$(MAKE) -C $$d $@; \
 	done
