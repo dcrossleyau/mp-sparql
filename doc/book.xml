@@ -61,7 +61,7 @@
  <chapter id="installation">
   <title>Installation</title>
   <para>
-   MP-SPARQL is available as packages for CentOS/RHEL 5+6 and most
+   MP-SPARQL is available as packages for CentOS/RHEL and most
    recent Ubuntu/Debian versions. For other systems, the module must be build
    from source.
   </para>
@@ -74,6 +74,9 @@
 	url="http://ftp.indexdata.dk/pub/mp-sparql/redhat/centos/5.5/README">CentOS 5</ulink>,
     <ulink
 	url="http://ftp.indexdata.dk/pub/mp-sparql/redhat/centos/6/README">CentOS 6</ulink>
+    ,
+    <ulink
+	url="http://ftp.indexdata.dk/pub/mp-sparql/redhat/centos/7/README">CentOS 7</ulink>
     ,
     <ulink
 	url="http://ftp.indexdata.dk/pub/mp-sparql/ubuntu/README">Ubuntu</ulink>
