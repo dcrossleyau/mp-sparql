@@ -38,7 +38,7 @@ mp-sparql.pdf: $(XMLFILES) local.ent
 	$(MAN_COMPILE) $<
 
 clean:
-	rm -f *.html *.pdf manref.xml *.hhp *.hhc $(MANFILES)
+	rm -f local.ent *.html *.pdf manref.xml *.hhp *.hhc $(MANFILES)
 
 distclean: clean
 
