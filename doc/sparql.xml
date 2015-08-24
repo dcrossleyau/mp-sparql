@@ -26,15 +26,32 @@
    HTTP requests that accesses a remote triplestore via HTTP
   </para>
   <para>
-   Configuration consists of one or more db elements. Each db element
-   describes how to access a specific database. The db element takes
-   attributes name of Z39.50 database (<literal>path</literal>) and
-   HTTP access point of triplestore (<literal>uri</literal>).
-   Optionally, the schema for the database may be given with attribute
-   <literal>schema</literal>.
-   Each
-   db element takes these elements:
-   Configurable values:
+   This module only inspects Z39.50. HTTP requests are ignored (passed through).
+   When this module is in effect, the result is HTTP packages. Use
+   the <literal>http_client</literal> module after this module in the
+   route in order to contact a remote triplestore via HTTP
+  </para>
+  <para>
+   Configuration consists of an optional defaults section and one or more
+   database sections.
+  </para>
+  <para>
+   The default sections is defined with element <literal>defaults</literal>
+   and specifies the URL of the triplestore by attribute
+   <literal>uri</literal>.
+  </para>
+  <para>
+   A database section is defined with element <literal>db</literal>.
+   The <literal>db</literal> element must specify attribute
+   <literal>path</literal> which is the name of the Z39.50 database.
+   It should also include attribute <literal>uri</literal> with the
+   URL of the triplestore; unless already specified in the detaults
+   section.
+   The element-set-name / schema for the database may be given with
+   attribute <literal>schema</literal>.
+   A db configuration may also include settings from another db section -
+   specified by the <literal>include</literal> attribute.
+   Each database section takes these elements:
    <variablelist>
     <varlistentry><term>&lt;prefix/&gt;</term>
      <listitem>
@@ -67,21 +84,22 @@
     <varlistentry><term>&lt;index type="attribute"/&gt;</term>
      <listitem>
       <para>
-       Section used to declare RPN use attribute strings (indexes) and map
-       them to BIBFRAME graph patterns.
-       Items in this section are expanded during RPN query processing and
-       placeholders (<literal>%s</literal>, <literal>%d</literal>,
-       <literal>%t</literal>) are substituted with query terms.
-       To map a given CQL index (e.g the default keyword index) into
-       multiple entity properties, SPARQL constructs like
-       `OPTIONAL` or `UNION` could be used.
+       Section used to declare RPN/Type-1 use attribute strings (indices)
+       and map them to BIBFRAME graph patterns.
+       Items in this section are constructed during RPN query processing and
+       placeholders that are prefixed by a percent sign (<literal>%</literal>)
+       are expanded.
+       See <xref linkend="expansions">EXPANSIONS</xref>.
+       To map a given use attribute (search field) into
+       multiple entity properties, SPARQL constructs like `OPTIONAL` or
+       `UNION` can be used.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry><term>&lt;present type="attribute"/&gt;</term>
      <listitem>
       <para>
-       Section used to declare retrieval for a given element-set 
+       Section used to declare retrieval for a given element-set-name
        (SRU schema). The CDATA is SPARQL where <literal>%u</literal> holds
        the URI of the record. This can be used to construct the resulting
        record.
@@ -100,9 +118,50 @@
    </variablelist>
   </para>
  </refsect1>
-
- <refsect1><title>SCHEMA</title>
-   <literallayout><xi:include
+ <refsect1 id="expansions"><title>EXPANSIONS</title>
+   <variablelist>
+    <varlistentry><term><literal>%t</literal></term>
+     <listitem>
+      <para>
+       The term verbatim as it appears in the Type-1 query.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term><literal>%s</literal></term>
+     <listitem>
+      <para>
+       Like <literal>%t</literal> but quoted - for general strings.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term><literal>%d</literal></term>
+     <listitem>
+      <para>
+       Term - expecting an integer.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term><literal>%u</literal></term>
+     <listitem>
+      <para>
+       Like <literal>%t</literal>, but with prefix <literal>&lt;</literal>
+       and suffix <literal>&gt;</literal> - for URIs.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry><term><literal>%v</literal></term>
+     <listitem>
+      <para>
+       Expands to a SPARQL local variable <literal>?v...</literal>. Allows
+       the use of a local SPARQL variable for each Attribute+Term in the
+       Type-1 query.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect1>
+  <refsect1><title>SCHEMA</title>
+  <literallayout><xi:include
 		     xi:href="filter_sparql.rnc"
 		     xi:parse="text"
 		     xmlns:xi="http://www.w3.org/2001/XInclude" />
@@ -175,17 +234,18 @@
    </para>
    <para>
     This returns one row for each work. Titles, authors, and subjects
-    are all optional. If they repeat, the repeated values are concatenated into
-    a single field, separated by semicolons. This is done by the GROUP_DIGEST
-    function that is specific to the Virtuoso back end.
+    are all optional. If they repeat, the repeated values are concatenated
+    into a single field, separated by semicolons. This is done by the
+    GROUP_DIGEST function that is specific to the Virtuoso back end.
    </para>
    <para>
-    This example supports use attributes 4 (title), 1003 (author), 21 (subject),
-    and 1016 (keyword) which matches any literal in a triplet that refers to the
-    work, so it works for the titleValue in the workTitle, as well as the label
-    in the subject, and what ever else there may be. Like the preceding example,
-    the matching is by a simple substring, case sensitive. A more realistic term
-    matching could be done with regular expressions, at the cost of some readability
+    This example supports use attributes 4 (title), 1003 (author),
+    21 (subject), and 1016 (keyword) which matches any literal in a
+    triplet that refers to the work, so it works for the titleValue in
+    the workTitle, as well as the label in the subject, and what ever
+    else there may be. Like the preceding example, the matching is by a
+    simple substring, case sensitive. A more realistic term matching could
+    be done with regular expressions, at the cost of some readability
     portability, and performance.
    </para>
  </refsect1>
@@ -222,9 +282,10 @@
  <refsect1><title>EXAMPLE</title>
    <para>
     Configuration for database "instance". Like "work" above this uses SELECT
-    to return row-based data, this time from the instances. This is not deduplicated,
-    so if an instance has two titles, we get two rows, and if it also has
-    two formats, we get four rows. The DISTINCT in the SELECT
+    to return row-based data, this time from the instances.
+    This is not deduplicated, so if an instance has two titles, we get two
+    rows, and if it also has two formats, we get four rows.
+    The DISTINCT in the SELECT
    <screen><![CDATA[
     <db path="instance" schema="sparql-results">
       <prefix>bf: http://bibframe.org/vocab/</prefix>
@@ -238,7 +299,6 @@
  ]]>
    </screen>
   </para>
-
 
  </refsect1>
 

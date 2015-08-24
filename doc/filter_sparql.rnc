@@ -7,14 +7,15 @@ filter_sparql =
   attribute id { xsd:NCName }?,
   attribute name { xsd:NCName }?,
   element mp:defaults {
-    attribute uri { xsd:string }
+    attribute uri { xsd:string }?
   }?,
   element mp:db {
     attribute path { xsd:string },
-    attribute uri { xsd:string },
-    attribute schema { xsd:string },
+    attribute uri { xsd:string }?,
+    attribute schema { xsd:string }?,
+    attribute include { xsd:string }?,
     element mp:prefix { xsd:string }+,
-    element mp:field { xsd:string }*,
+    element mp:form { xsd:string }*,
     element mp:criteria { xsd:string }*,
     element mp:index {
       attribute type { xsd:string },
