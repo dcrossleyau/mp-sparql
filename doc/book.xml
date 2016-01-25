@@ -33,7 +33,7 @@
     This manual is part of MP-SPARQL version &version;.
     </simpara>
    <simpara>
-    MP-XQuery is a Metaproxy module that converts Type-1/RPN Queries
+    MP-SPARQL is a Metaproxy module that converts Type-1/RPN Queries
     to SPARQL.
    </simpara>
    <simpara>
@@ -62,14 +62,14 @@
   <title>Installation</title>
   <para>
    MP-SPARQL is available as packages for CentOS/RHEL and most
-   recent Ubuntu/Debian versions. For other systems, the module must be build
+   recent Ubuntu/Debian versions. For other systems, the module must be built
    from source.
   </para>
   <sect1 id="installation.packages">
    <title>Installing packages</title>
    <para>
     You need to enable the relevant software repositories.
-    For setting up refer to one of:
+    For setting up, refer to one of:
     <ulink
 	url="http://ftp.indexdata.dk/pub/mp-sparql/redhat/centos/5.5/README">CentOS 5</ulink>,
     <ulink
@@ -86,14 +86,14 @@
    </para>
    <para>
     The package is called <literal>mp-sparql</literal> on RHEL/Debian systems.
-    Install that package and you are ready to use filter "sparql" in your
+    Install that package, and then you are ready to use filter "sparql" in your
     setup.
    </para>
    <para>
     mp-sparql depends on a number of packages created by Index Data and
     system-provided ones, such as Libxml2. For external software Zorba, no
-    system package exist so Index Data has packaged that separately. This
-    package is called <literal>idzorba</literal>. All these dependences should
+    system package exists, so Index Data has packaged that separately. This
+    package is called <literal>idzorba</literal>. All these dependencies should
     be automatically installed when the Index Data software repository is
     set up.
    </para>
@@ -124,7 +124,7 @@
    <para>
     You can now install the <filename>metaproxy_filter_sparql.so</filename>
     in a directory searched by Metaproxy daemon.
-    Specifically, that's the directories
+    Specifically, that is the directories
     given by the <literal>dlpath</literal> configuration.
    </para>
    <para>
@@ -148,14 +148,14 @@
     <literal>make install</literal> from source, sample configuration
     can be found in <filename>/usr/share/mp-sparql/bibframe</filename> or
     <filename>/usr/local/share/mp-sparql/bibframe</filename>. In the
-    the following /usr/share prefix assumed. Adjust accordingly.
+    following, the prefix <filename>/usr/share</filename> is assumed. Adjust accordingly.
     The directory contains these files:
     <variablelist>
      <varlistentry>
       <term><filename>triplestore.xml</filename></term>
       <listitem>
        <para>
-	A mature PQF to SPARQL configuration illustrating a lot of the
+	A mature PQF to SPARQL configuration, illustrating a lot of the
 	configuration facilities that are described in the manual
 	page of <xref linkend="sparql"/>.
        </para>
@@ -166,7 +166,7 @@
       <listitem>
        <para>
 	A full metaproxy configuration file that includes
-	<filename>triplestore.xml</filename> cofiguration for the
+	<filename>triplestore.xml</filename> configuration for the
 	mp-sparql filter, enables SRU and CQL to PQF conversion.
        </para>
       </listitem>
@@ -175,7 +175,7 @@
       <term><filename>filter-sparql.xml</filename></term>
       <listitem>
        <para>
-	A partial metaproxy configuration suitable to be enabled in
+	A partial metaproxy configuration, suitable to be enabled in
 	<filename>/etc/metaproxy/filters-enabled</filename>.
 	This includes <filename>triplestore.xml</filename> as well.
        </para>
@@ -184,7 +184,7 @@
     </variablelist>
    </para>
    <para>
-    If you want to use the package layout and modular configuration we
+    If you want to use the package layout and modular configuration, we
     suggest you use filter-sparql.xml and perform something along the lines of:
     <screen>
      cp /usr/share/mp-sparql/bibframe/filter-sparql.xml /etc/metaproxy/filters-available
@@ -199,7 +199,7 @@
    </para>
    <para>
     If you want to create your own top-level configuration, you can copy
-    <filename>config-sparql.xml</filename> to any location you like and
+    <filename>config-sparql.xml</filename> to any location you like, and
     run metaproxy with that. Something like this:
     <screen>
      mkdir /etc/myconfig

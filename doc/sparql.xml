@@ -22,14 +22,14 @@
 
  <refsect1><title>DESCRIPTION</title>
   <para>
-   This module translates Z39.50 operations init, search, present to
-   HTTP requests that accesses a remote triplestore via HTTP
+   This module translates Z39.50 operations (init, search, present) to
+   HTTP requests that access a remote triplestore via HTTP.
   </para>
   <para>
-   This module only inspects Z39.50. HTTP requests are ignored (passed through).
+   This module only inspects Z39.50, while HTTP requests are ignored (passed through).
    When this module is in effect, the result is HTTP packages. Use
    the <literal>http_client</literal> module after this module in the
-   route in order to contact a remote triplestore via HTTP
+   route, in order to contact a remote triplestore via HTTP.
   </para>
   <para>
    Configuration consists of an optional defaults section and one or more
@@ -45,7 +45,7 @@
    The <literal>db</literal> element must specify attribute
    <literal>path</literal> which is the name of the Z39.50 database.
    It should also include attribute <literal>uri</literal> with the
-   URL of the triplestore; unless already specified in the detaults
+   URL of the triplestore; unless already specified in the defaults
    section.
    The element-set-name / schema for the database may be given with
    attribute <literal>schema</literal>.
@@ -57,7 +57,7 @@
      <listitem>
       <para>
        Section that maps prefixes and namespaces for RDF vocabularies.
-       The format is prefix followed by colon, followed by value.
+       The format is prefix, followed by colon, followed by value.
       </para>
      </listitem>
     </varlistentry>
@@ -72,11 +72,11 @@
     <varlistentry><term>&lt;criteria/&gt;</term>
      <listitem>
       <para>
-       section that allows to map static graph patterns for binding
+       Section that allows to map static graph patterns for binding
        variables, narrowing types, etc, or any other WHERE clause criteria
        static to the Z39.50/SRU database. The final query conversion logic
        should be able to deduce which optional criteria should be included
-       in the generated SPARQL by analyzing variables required in the query
+       in the generated SPARQL, by analyzing variables required in the query
        matching and display fields.
       </para>
      </listitem>
